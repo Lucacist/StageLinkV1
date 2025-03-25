@@ -1,0 +1,175 @@
+{% extends 'layout/base.twig' %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="static/css/dashboard.css">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Tableau de bord</h1>
+    </div>
+
+    {% if error is defined and error %}
+    <div class="alert alert-error">
+        {{ error }}
+    </div>
+    {% endif %}
+    
+    {% if success is defined and success %}
+    <div class="alert alert-success">
+        {{ success }}
+    </div>
+    {% endif %}
+
+    <div class="dashboard-content">
+        {% if userPermissions.GERER_ENTREPRISES is defined and userPermissions.GERER_ENTREPRISES %}
+        <div class="card">
+            <h2>Créer une entreprise</h2>
+            <form action="index.php?route=traiter_entreprise" method="POST" class="form-entreprise">
+                <input type="hidden" name="action" value="create">
+                <div class="form-group">
+                    <label for="nom">Nom de l'entreprise</label>
+                    <input type="text" id="nom" name="nom" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description de l'entreprise</label>
+                    <textarea id="description" name="description" rows="4" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email de contact</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="telephone">Téléphone de contact</label>
+                    <input type="tel" id="telephone" name="telephone" pattern="[0-9]{10}" required>
+                    <small>Format : 0123456789</small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">Créer l'entreprise</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if userPermissions.CREER_OFFRE is defined and userPermissions.CREER_OFFRE %}
+        <div class="card">
+            <h2>Créer une offre</h2>
+            <form action="index.php?route=traiter_offre" method="POST" class="form-offre">
+                <input type="hidden" name="action" value="create">
+                
+                <div class="form-group">
+                    <label for="entreprise_id">Entreprise</label>
+                    <select id="entreprise_id" name="entreprise_id" required>
+                        <option value="">Sélectionnez une entreprise</option>
+                        {% for entreprise in entreprises %}
+                        <option value="{{ entreprise.id }}">{{ entreprise.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="titre">Titre de l'offre</label>
+                    <input type="text" id="titre" name="titre" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="4" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="base_remuneration">Rémunération (€)</label>
+                    <input type="number" id="base_remuneration" name="base_remuneration" step="0.01" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="date_debut">Date de début</label>
+                    <input type="date" id="date_debut" name="date_debut">
+                </div>
+                
+                <div class="form-group">
+                    <label for="date_fin">Date de fin</label>
+                    <input type="date" id="date_fin" name="date_fin">
+                </div>
+                
+                <div class="form-group">
+                    <label>Compétences requises</label>
+                    <div class="checkbox-grid">
+                        {% if competences is empty %}
+                            <p style="grid-column: 1 / -1; text-align: center;">
+                                Aucune compétence disponible. Veuillez en ajouter d'abord.
+                            </p>
+                        {% else %}
+                            {% for competence in competences %}
+                            <div class="checkbox-item">
+                                <input type="checkbox" 
+                                       id="comp_{{ competence.id }}" 
+                                       name="competences[]" 
+                                       value="{{ competence.id }}">
+                                <label for="comp_{{ competence.id }}">{{ competence.nom }}</label>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <p class="info-text">Sélectionnez au moins une compétence requise pour l'offre.</p>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">Créer l'offre</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+        
+        {% if userPermissions.GERER_UTILISATEURS is defined and userPermissions.GERER_UTILISATEURS or session.user_role == 'ADMIN' or session.user_role == 'PILOTE' %}
+        <div class="card">
+            <h2>Créer un utilisateur</h2>
+            
+            <form action="index.php?route=traiter_utilisateur" method="POST" class="form-utilisateur">
+                <input type="hidden" name="action" value="create">
+                
+                <div class="form-group">
+                    <label for="nom">Nom*</label>
+                    <input type="text" id="nom" name="nom" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="prenom">Prénom*</label>
+                    <input type="text" id="prenom" name="prenom" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email*</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="mot_de_passe">Mot de passe*</label>
+                    <input type="password" id="mot_de_passe" name="mot_de_passe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="role">Rôle*</label>
+                    <select id="role" name="role" required>
+                        <option value="">Sélectionnez un rôle</option>
+                        {% if session.user_role == 'ADMIN' %}
+                            <option value="PILOTE">Pilote</option>
+                        {% endif %}
+                        <option value="ETUDIANT">Étudiant</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">Créer l'utilisateur</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
