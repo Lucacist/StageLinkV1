@@ -34,15 +34,27 @@ class CompetenceModel {
     }
     
     public function createCompetence($nom) {
+        // Vérifier si la compétence existe déjà
+        $sql = "SELECT COUNT(*) as count FROM Competences WHERE nom = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("s", $nom);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        
+        if ($row['count'] > 0) {
+            return ['success' => false, 'message' => 'Cette compétence existe déjà.'];
+        }
+        
         $sql = "INSERT INTO Competences (nom) VALUES (?)";
         $stmt = $this->db->prepare($sql);
         $stmt->bind_param("s", $nom);
         
         if ($stmt->execute()) {
-            return $this->db->insert_id;
+            return ['success' => true, 'id' => $this->db->insert_id];
         }
         
-        return false;
+        return ['success' => false, 'message' => 'Erreur lors de la création de la compétence: ' . $stmt->error];
     }
     
     public function updateCompetence($id, $nom) {

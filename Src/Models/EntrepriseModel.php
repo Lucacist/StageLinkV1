@@ -132,6 +132,18 @@ class EntrepriseModel {
     }
     
     public function createEntreprise($nom, $description, $email, $telephone) {
+        // Vérifier si l'email existe déjà
+        $sql = "SELECT COUNT(*) as count FROM Entreprises WHERE email = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        
+        if ($row['count'] > 0) {
+            return false;
+        }
+        
         $sql = "INSERT INTO Entreprises (nom, description, email, telephone) 
                 VALUES (?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
