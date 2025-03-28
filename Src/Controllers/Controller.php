@@ -14,30 +14,23 @@ class Controller {
     }
     
     protected function render($view, $data = []) {
-        // Déterminer le chemin du template Twig
         $templatePath = $this->getTemplatePath($view);
         
         try {
-            // Rendre le template avec Twig
             return $this->twig->render($templatePath, $data);
         } catch (\Twig\Error\LoaderError $e) {
-            // Gérer l'erreur si le template n'existe pas
             error_log('Erreur Twig: ' . $e->getMessage());
             return 'Erreur: Template non trouvé - ' . $templatePath;
         } catch (\Exception $e) {
-            // Gérer les autres erreurs
             error_log('Erreur: ' . $e->getMessage());
             return 'Erreur lors du rendu du template: ' . $e->getMessage();
         }
     }
     
     private function getTemplatePath($view) {
-        // Vérifier si le chemin de vue contient déjà un séparateur de répertoire
         if (strpos($view, '/') !== false) {
-            // Le chemin contient déjà un séparateur, utiliser tel quel
             return $view . '.twig';
         } 
-        // Gestion des cas particuliers pour les vues
         else if ($view === 'offres' || $view === 'offre_details' || $view === 'creer-offre' || $view === 'confirmation_candidature' || $view === 'mes_candidatures') {
             return 'offre/' . $view . '.twig';
         } else if ($view === 'Entreprises' || $view === 'entreprise_details') {
@@ -88,4 +81,3 @@ class Controller {
         exit();
     }
 }
-?>

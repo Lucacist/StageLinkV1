@@ -6,7 +6,7 @@ class AuthController extends Controller {
     private $utilisateurModel;
     
     public function __construct() {
-        parent::__construct(); // Appel au constructeur parent pour initialiser Twig
+        parent::__construct();
         $this->utilisateurModel = new UtilisateurModel();
     }
     
@@ -68,4 +68,3 @@ class AuthController extends Controller {
         $this->redirect('login');
     }
 }
-?>

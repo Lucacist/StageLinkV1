@@ -8,23 +8,19 @@ class EntrepriseController extends Controller {
     private $entrepriseModel;
     
     public function __construct() {
-        parent::__construct(); // Appel au constructeur parent pour initialiser Twig
+        parent::__construct();
         $this->entrepriseModel = new EntrepriseModel();
     }
     
     public function index() {
         $this->checkPageAccess('VOIR_ENTREPRISE');
         
-        // Récupérer le numéro de page depuis l'URL
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         
-        // Nombre total d'entreprises
         $totalEntreprises = $this->entrepriseModel->countAllEntreprises();
         
-        // Créer l'objet pagination (12 entreprises par page)
         $pagination = new Pagination($totalEntreprises, 5, $page);
         
-        // Récupérer les entreprises pour la page actuelle avec leurs évaluations
         $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
         $entreprises = $this->entrepriseModel->getEntreprisesWithPaginationAndRatings(
             $pagination->getLimit(), 
@@ -32,7 +28,6 @@ class EntrepriseController extends Controller {
             $userId
         );
         
-        // URL de base pour les liens de pagination
         $baseUrl = 'index.php?route=entreprises';
         
         echo $this->render('Entreprises', [
@@ -77,6 +72,10 @@ class EntrepriseController extends Controller {
     public function traiter() {
         $this->checkPageAccess('GERER_ENTREPRISES');
         
+        error_log("Méthode traiter() appelée dans EntrepriseController");
+        error_log("Méthode HTTP: " . $_SERVER['REQUEST_METHOD']);
+        error_log("POST data: " . print_r($_POST, true));
+        
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect('dashboard');
             return;
@@ -88,6 +87,9 @@ class EntrepriseController extends Controller {
         $description = trim($_POST['description'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $telephone = trim($_POST['telephone'] ?? '');
+        
+        error_log("Action: " . $action);
+        error_log("ID: " . $id);
         
         $errors = [];
         
@@ -108,44 +110,59 @@ class EntrepriseController extends Controller {
                 $success = $this->entrepriseModel->createEntreprise($nom, $description, $email, $telephone);
                 if ($success) {
                     $_SESSION['success_message'] = "L'entreprise a été créée avec succès.";
+                    $this->redirect('dashboard');
                 } else {
                     $_SESSION['error_message'] = "Une erreur est survenue lors de la création de l'entreprise.";
+                    $this->redirect('dashboard');
                 }
             } elseif ($action === 'update' && $id > 0) {
+                error_log("Tentative de mise à jour de l'entreprise ID: " . $id);
                 $success = $this->entrepriseModel->updateEntreprise($id, $nom, $description, $email, $telephone);
+                error_log("Résultat de la mise à jour: " . ($success ? "Succès" : "Échec"));
+                
                 if ($success) {
                     $_SESSION['success_message'] = "L'entreprise a été mise à jour avec succès.";
+                    $this->redirect('entreprise_details', ['id' => $id]);
                 } else {
                     $_SESSION['error_message'] = "Une erreur est survenue lors de la mise à jour de l'entreprise.";
+                    $this->redirect('entreprise_details', ['id' => $id]);
                 }
             } elseif ($action === 'delete' && $id > 0) {
+                error_log("Tentative de suppression de l'entreprise ID: " . $id);
                 $success = $this->entrepriseModel->deleteEntreprise($id);
+                error_log("Résultat de la suppression: " . ($success ? "Succès" : "Échec"));
+                
                 if ($success) {
                     $_SESSION['success_message'] = "L'entreprise a été supprimée avec succès.";
+                    $this->redirect('entreprises');
                 } else {
                     $_SESSION['error_message'] = "Une erreur est survenue lors de la suppression de l'entreprise.";
+                    $this->redirect('entreprise_details', ['id' => $id]);
                 }
+            } else {
+                error_log("Action non reconnue ou ID invalide: " . $action . ", ID: " . $id);
+                $_SESSION['error_message'] = "Action non reconnue.";
+                $this->redirect('dashboard');
             }
         } else {
+            error_log("Erreurs de validation: " . implode(', ', $errors));
             $_SESSION['error_message'] = implode('<br>', $errors);
+            if ($action === 'create') {
+                $this->redirect('dashboard');
+            } else {
+                $this->redirect('entreprise_details', ['id' => $id]);
+            }
         }
-        
-        $this->redirect('dashboard');
     }
     
-    /**
-     * Traite la soumission d'une note pour une entreprise
-     */
     public function rate()
     {
-        // Vérifier si l'utilisateur est connecté
         if (!isset($_SESSION['user_id'])) {
             $_SESSION['error_message'] = "Vous devez être connecté pour noter une entreprise.";
             header('Location: index.php?route=login');
             exit;
         }
 
-        // Récupérer et valider les données
         $entrepriseId = isset($_POST['entreprise_id']) ? intval($_POST['entreprise_id']) : 0;
         $note = isset($_POST['note']) ? intval($_POST['note']) : 0;
         
@@ -155,7 +172,6 @@ class EntrepriseController extends Controller {
             exit;
         }
 
-        // Enregistrer la note
         $result = $this->entrepriseModel->rateEntreprise($entrepriseId, $_SESSION['user_id'], $note);
         
         if ($result) {
@@ -164,7 +180,6 @@ class EntrepriseController extends Controller {
             $_SESSION['error_message'] = "Une erreur est survenue lors de l'enregistrement de votre note.";
         }
 
-        // Rediriger vers la page de détails de l'entreprise
         header('Location: index.php?route=entreprise_details&id=' . $entrepriseId);
         exit;
     }

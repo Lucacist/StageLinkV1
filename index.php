@@ -1,26 +1,19 @@
 <?php
-// Définir le chemin racine
 define('ROOT_PATH', __DIR__);
 
-// Démarrer la session
 session_start();
 
-// Inclure la configuration
 require_once ROOT_PATH . '/src/config/config.php';
 require_once ROOT_PATH . '/vendor/autoload.php';
 
-// Si l'utilisateur n'est pas connecté et essaie d'accéder à une route qui nécessite une authentification,
-// il est redirigé vers la page de connexion
 $public_routes = ['login', 'logout'];
 $route = $_GET['route'] ?? 'accueil';
 
-// Rediriger vers login si l'utilisateur n'est pas connecté et tente d'accéder à une route protégée
 if (!isset($_SESSION['user_id']) && !in_array($route, $public_routes)) {
     header('Location: index.php?route=login');
     exit();
 }
 
-// Acheminer vers le contrôleur approprié
 switch ($route) {
     case 'accueil':
         require_once ROOT_PATH . '/src/Controllers/AccueilController.php';
@@ -137,7 +130,6 @@ switch ($route) {
         break;
         
     default:
-        // Page 404 ou redirection vers la page d'accueil
         header('Location: index.php?route=accueil');
         exit();
 }

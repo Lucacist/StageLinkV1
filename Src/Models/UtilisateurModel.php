@@ -10,32 +10,23 @@ class UtilisateurModel {
     public function getUserById($userId) {
         $sql = "SELECT * FROM Utilisateurs WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $userId);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$userId]);
         
-        if ($row = $result->fetch_assoc()) {
-            return $row;
-        }
-        
-        return null;
+        return $stmt->fetch() ?: null;
     }
     
     public function authenticate($email, $password) {
         $sql = "SELECT * FROM Utilisateurs WHERE email = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$email]);
         
-        if ($row = $result->fetch_assoc()) {
-            // Si le mot de passe est déjà haché
+        $row = $stmt->fetch();
+        
+        if ($row) {
             if (password_verify($password, $row['mot_de_passe'])) {
                 return $row;
             } 
-            // Si le mot de passe n'est pas haché (pour la migration)
             else if ($password === $row['mot_de_passe']) {
-                // Mettre à jour le mot de passe avec un hash
                 $this->updatePasswordHash($row['id'], $password);
                 return $row;
             }
@@ -49,8 +40,7 @@ class UtilisateurModel {
         
         $sql = "UPDATE Utilisateurs SET mot_de_passe = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("si", $hashedPassword, $userId);
-        return $stmt->execute();
+        return $stmt->execute([$hashedPassword, $userId]);
     }
     
     public function getUserRole($userId) {
@@ -60,15 +50,9 @@ class UtilisateurModel {
                 WHERE u.id = ?";
                 
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $userId);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$userId]);
         
-        if ($row = $result->fetch_assoc()) {
-            return $row;
-        }
-        
-        return null;
+        return $stmt->fetch() ?: null;
     }
     
     public function getUserPermissions($userId) {
@@ -80,12 +64,10 @@ class UtilisateurModel {
                 WHERE u.id = ?";
                 
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $userId);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$userId]);
         
         $permissions = [];
-        while ($row = $result->fetch_assoc()) {
+        while ($row = $stmt->fetch()) {
             $permissions[] = $row['code'];
         }
         
@@ -101,67 +83,49 @@ class UtilisateurModel {
                 WHERE u.id = ? AND p.code = ?";
                 
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("is", $userId, $permissionCode);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
+        $stmt->execute([$userId, $permissionCode]);
+        $row = $stmt->fetch();
         
         return $row['count'] > 0;
     }
     
     public function createUser($nom, $prenom, $email, $mot_de_passe, $role_id) {
-        // Vérifier si l'email existe déjà
         $sql = "SELECT COUNT(*) as count FROM Utilisateurs WHERE email = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
+        $stmt->execute([$email]);
+        $row = $stmt->fetch();
         
         if ($row['count'] > 0) {
             return ['success' => false, 'message' => 'Un utilisateur avec cet email existe déjà.'];
         }
         
-        // Hacher le mot de passe
         $hashedPassword = password_hash($mot_de_passe, PASSWORD_DEFAULT);
         
-        // Insérer le nouvel utilisateur
         $sql = "INSERT INTO Utilisateurs (nom, prenom, email, mot_de_passe, role_id) VALUES (?, ?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("ssssi", $nom, $prenom, $email, $hashedPassword, $role_id);
         
-        if ($stmt->execute()) {
-            $insertId = $stmt->insert_id;
+        try {
+            $stmt->execute([$nom, $prenom, $email, $hashedPassword, $role_id]);
+            $insertId = $this->db->getLastInsertId();
             return ['success' => true, 'id' => $insertId];
-        } else {
-            return ['success' => false, 'message' => 'Erreur lors de la création de l\'utilisateur: ' . $stmt->error];
+        } catch (PDOException $e) {
+            return ['success' => false, 'message' => 'Erreur lors de la création de l\'utilisateur: ' . $e->getMessage()];
         }
     }
     
     public function getAllRoles() {
         $sql = "SELECT * FROM Roles";
-        $result = $this->db->query($sql);
+        $stmt = $this->db->query($sql);
         
-        $roles = [];
-        while ($row = $result->fetch_assoc()) {
-            $roles[] = $row;
-        }
-        
-        return $roles;
+        return $stmt->fetchAll();
     }
     
     public function getRoleIdByCode($roleCode) {
         $sql = "SELECT id FROM Roles WHERE code = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("s", $roleCode);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$roleCode]);
         
-        if ($row = $result->fetch_assoc()) {
-            return $row['id'];
-        }
-        
-        return null;
+        $row = $stmt->fetch();
+        return $row ? $row['id'] : null;
     }
 }
-?>

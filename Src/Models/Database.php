@@ -9,10 +9,12 @@ class Database {
         $password = "";
         $dbname = "StageLink";
         
-        $this->conn = new mysqli($servername, $username, $password, $dbname);
-        
-        if ($this->conn->connect_error) {
-            die("Échec de la connexion : " . $this->conn->connect_error);
+        try {
+            $this->conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        } catch(PDOException $e) {
+            die("Connection failed: " . $e->getMessage());
         }
     }
     
@@ -27,16 +29,11 @@ class Database {
         return $this->conn;
     }
     
-    public function query($sql) {
-        return $this->conn->query($sql);
-    }
-    
     public function prepare($sql) {
         return $this->conn->prepare($sql);
     }
     
-    public function getLastInsertId() {
-        return $this->conn->insert_id;
+    public function query($sql) {
+        return $this->conn->query($sql);
     }
 }
-?>

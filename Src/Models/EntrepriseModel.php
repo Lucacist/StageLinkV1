@@ -6,19 +6,14 @@ class EntrepriseModel {
         require_once ROOT_PATH . '/src/Models/Database.php';
         $this->db = Database::getInstance();
     }
-    /**
- * Compte le nombre total d'entreprises
- */
+
     public function countAllEntreprises() {
         $sql = "SELECT COUNT(*) as total FROM Entreprises";
-        $result = $this->db->query($sql);
-        $row = $result->fetch_assoc();
+        $stmt = $this->db->query($sql);
+        $row = $stmt->fetch();
         return $row['total'];
     }
 
-/**
- * Récupère une liste paginée d'entreprises avec leurs évaluations
- */
     public function getEntreprisesWithPaginationAndRatings($limit, $offset, $userId = null) {
         $sql = "SELECT e.*, 
                 COALESCE(AVG(ev.note), 0) as note_moyenne,
@@ -36,29 +31,17 @@ class EntrepriseModel {
                 LIMIT ?, ?";
     
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("iii", $userId, $offset, $limit);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$userId, $offset, $limit]);
     
-        $entreprises = [];
-        while ($row = $result->fetch_assoc()) {
-            $entreprises[] = $row;
-        }
-    
-        return $entreprises;
+        return $stmt->fetchAll();
     }
 
     
     public function getAllEntreprises() {
         $sql = "SELECT * FROM Entreprises ORDER BY nom";
-        $result = $this->db->query($sql);
+        $stmt = $this->db->query($sql);
         
-        $entreprises = [];
-        while ($row = $result->fetch_assoc()) {
-            $entreprises[] = $row;
-        }
-        
-        return $entreprises;
+        return $stmt->fetchAll();
     }
     
     public function getAllEntreprisesWithRatings($userId = null) {
@@ -77,30 +60,17 @@ class EntrepriseModel {
                 ORDER BY e.nom";
         
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $userId);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$userId]);
         
-        $entreprises = [];
-        while ($row = $result->fetch_assoc()) {
-            $entreprises[] = $row;
-        }
-        
-        return $entreprises;
+        return $stmt->fetchAll();
     }
     
     public function getEntrepriseById($id) {
         $sql = "SELECT * FROM Entreprises WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$id]);
         
-        if ($row = $result->fetch_assoc()) {
-            return $row;
-        }
-        
-        return null;
+        return $stmt->fetch() ?: null;
     }
     
     public function getEntrepriseWithRatingsById($id, $userId = null) {
@@ -120,25 +90,16 @@ class EntrepriseModel {
                 GROUP BY e.id";
         
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("ii", $userId, $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$userId, $id]);
         
-        if ($row = $result->fetch_assoc()) {
-            return $row;
-        }
-        
-        return null;
+        return $stmt->fetch() ?: null;
     }
     
     public function createEntreprise($nom, $description, $email, $telephone) {
-        // Vérifier si l'email existe déjà
         $sql = "SELECT COUNT(*) as count FROM Entreprises WHERE email = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
+        $stmt->execute([$email]);
+        $row = $stmt->fetch();
         
         if ($row['count'] > 0) {
             return false;
@@ -147,60 +108,92 @@ class EntrepriseModel {
         $sql = "INSERT INTO Entreprises (nom, description, email, telephone) 
                 VALUES (?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("ssss", $nom, $description, $email, $telephone);
-        return $stmt->execute();
+        return $stmt->execute([$nom, $description, $email, $telephone]);
     }
     
     public function updateEntreprise($id, $nom, $description, $email, $telephone) {
+        $checkSql = "SELECT id FROM Entreprises WHERE email = ? AND id != ?";
+        $checkStmt = $this->db->prepare($checkSql);
+        $checkStmt->execute([$email, $id]);
+        
+        if ($checkStmt->rowCount() > 0) {
+            return false;
+        }
+        
         $sql = "UPDATE Entreprises 
                 SET nom = ?, description = ?, email = ?, telephone = ? 
                 WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("ssssi", $nom, $description, $email, $telephone, $id);
-        return $stmt->execute();
+        return $stmt->execute([$nom, $description, $email, $telephone, $id]);
     }
     
     public function deleteEntreprise($id) {
-        $sql = "DELETE FROM Entreprises WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $id);
-        return $stmt->execute();
+        $this->db->getConnection()->beginTransaction();
+        
+        try {
+            $checkSql = "SELECT id FROM Entreprises WHERE id = ?";
+            $checkStmt = $this->db->prepare($checkSql);
+            $checkStmt->execute([$id]);
+            
+            if ($checkStmt->rowCount() === 0) {
+                error_log("Tentative de suppression d'une entreprise inexistante (ID: $id)");
+                return false;
+            }
+            
+            $sqlEvaluations = "DELETE FROM Evaluations WHERE entreprise_id = ?";
+            $stmtEvaluations = $this->db->prepare($sqlEvaluations);
+            $stmtEvaluations->execute([$id]);
+            error_log("Évaluations supprimées pour l'entreprise ID: $id");
+            
+            $sqlCandidatures = "DELETE FROM Candidatures WHERE offre_id IN (SELECT id FROM Offres WHERE entreprise_id = ?)";
+            $stmtCandidatures = $this->db->prepare($sqlCandidatures);
+            $stmtCandidatures->execute([$id]);
+            error_log("Candidatures supprimées pour l'entreprise ID: $id");
+            
+            $sqlOffres = "DELETE FROM Offres WHERE entreprise_id = ?";
+            $stmtOffres = $this->db->prepare($sqlOffres);
+            $stmtOffres->execute([$id]);
+            error_log("Offres supprimées pour l'entreprise ID: $id");
+            
+            $sqlEntreprise = "DELETE FROM Entreprises WHERE id = ?";
+            $stmtEntreprise = $this->db->prepare($sqlEntreprise);
+            $result = $stmtEntreprise->execute([$id]);
+            
+            if (!$result) {
+                error_log("Erreur lors de la suppression de l'entreprise ID: $id - " . $this->db->getConnection()->errorInfo()[2]);
+                $this->db->getConnection()->rollBack();
+                return false;
+            }
+            
+            $this->db->getConnection()->commit();
+            error_log("Entreprise ID: $id supprimée avec succès");
+            return true;
+        } catch (PDOException $e) {
+            error_log("Exception lors de la suppression de l'entreprise ID: $id - " . $e->getMessage());
+            $this->db->getConnection()->rollBack();
+            return false;
+        }
     }
     
-    /**
-     * Enregistre ou met à jour la note d'un utilisateur pour une entreprise
-     * 
-     * @param int $entrepriseId ID de l'entreprise
-     * @param int $utilisateurId ID de l'utilisateur
-     * @param int $note Note (1-5)
-     * @return bool Succès de l'opération
-     */
     public function rateEntreprise($entrepriseId, $utilisateurId, $note)
     {
         try {
-            // Vérifier si l'utilisateur a déjà noté cette entreprise
             $sql = "SELECT id FROM Evaluations WHERE entreprise_id = ? AND utilisateur_id = ?";
             $stmt = $this->db->prepare($sql);
-            $stmt->bind_param("ii", $entrepriseId, $utilisateurId);
-            $stmt->execute();
-            $result = $stmt->get_result();
+            $stmt->execute([$entrepriseId, $utilisateurId]);
             
-            if ($result->num_rows > 0) {
-                // Mettre à jour la note existante
-                $row = $result->fetch_assoc();
+            if ($stmt->rowCount() > 0) {
+                $row = $stmt->fetch();
                 $noteId = $row['id'];
                 $sql = "UPDATE Evaluations SET note = ? WHERE id = ?";
                 $stmt = $this->db->prepare($sql);
-                $stmt->bind_param("ii", $note, $noteId);
+                return $stmt->execute([$note, $noteId]);
             } else {
-                // Insérer une nouvelle note
                 $sql = "INSERT INTO Evaluations (entreprise_id, utilisateur_id, note) VALUES (?, ?, ?)";
                 $stmt = $this->db->prepare($sql);
-                $stmt->bind_param("iii", $entrepriseId, $utilisateurId, $note);
+                return $stmt->execute([$entrepriseId, $utilisateurId, $note]);
             }
-            
-            return $stmt->execute();
-        } catch (Exception $e) {
+        } catch (PDOException $e) {
             return false;
         }
     }
@@ -213,16 +206,9 @@ class EntrepriseModel {
                 ORDER BY ev.id DESC";
                 
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $entrepriseId);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$entrepriseId]);
         
-        $evaluations = [];
-        while ($row = $result->fetch_assoc()) {
-            $evaluations[] = $row;
-        }
-        
-        return $evaluations;
+        return $stmt->fetchAll();
     }
     
     public function getOffresEntreprise($entrepriseId) {
@@ -235,16 +221,9 @@ class EntrepriseModel {
                 ORDER BY o.date_debut DESC";
                 
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $entrepriseId);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$entrepriseId]);
         
-        $offres = [];
-        while ($row = $result->fetch_assoc()) {
-            $offres[] = $row;
-        }
-        
-        return $offres;
+        return $stmt->fetchAll();
     }
     
     public function getTotalCandidaturesEntreprise($entrepriseId) {
@@ -254,10 +233,8 @@ class EntrepriseModel {
                 WHERE o.entreprise_id = ?";
                 
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $entrepriseId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
+        $stmt->execute([$entrepriseId]);
+        $row = $stmt->fetch();
         
         return $row ? $row['total_candidatures'] : 0;
     }

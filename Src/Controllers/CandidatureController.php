@@ -8,7 +8,7 @@ class CandidatureController extends Controller {
     private $offreModel;
     
     public function __construct() {
-        parent::__construct(); // Appel au constructeur parent pour initialiser Twig
+        parent::__construct();
         require_once ROOT_PATH . '/src/Models/Database.php';
         $this->candidatureModel = new CandidatureModel();
         $this->offreModel = new OffreModel();
@@ -102,9 +102,6 @@ class CandidatureController extends Controller {
         }
     }
     
-    /**
-     * Affiche la liste des candidatures de l'utilisateur
-     */
     public function mesCandidatures() {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -115,7 +112,6 @@ class CandidatureController extends Controller {
             return;
         }
         
-        // Vérifier que l'utilisateur a le rôle ADMIN ou ETUDIANT
         if (!isset($_SESSION['user_role']) || !in_array($_SESSION['user_role'], ['ADMIN', 'ETUDIANT'])) {
             $this->redirect('accueil');
             return;
@@ -129,9 +125,6 @@ class CandidatureController extends Controller {
         ]);
     }
     
-    /**
-     * Affiche la page de confirmation après une candidature réussie
-     */
     public function confirmation() {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -153,9 +146,6 @@ class CandidatureController extends Controller {
         }
     }
     
-    /**
-     * Traite le formulaire de candidature
-     */
     public function traiter() {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -170,7 +160,6 @@ class CandidatureController extends Controller {
             return;
         }
         
-        // Empêcher les pilotes de postuler
         if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'PILOTE') {
             $_SESSION['flash'] = [
                 'type' => 'error',
@@ -239,7 +228,6 @@ class CandidatureController extends Controller {
             $errors[] = "Le CV est requis.";
         }
         
-        // Vérifier si l'utilisateur a déjà postulé à cette offre
         if ($this->candidatureModel->candidatureExiste($utilisateur_id, $offre_id)) {
             $errors[] = "Vous avez déjà candidaté pour cette offre.";
         }

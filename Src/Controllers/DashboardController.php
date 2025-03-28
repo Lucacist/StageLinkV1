@@ -10,7 +10,7 @@ class DashboardController extends Controller {
     private $entrepriseModel;
     
     public function __construct() {
-        parent::__construct(); // Appel au constructeur parent pour initialiser Twig
+        parent::__construct();
         $this->utilisateurModel = new UtilisateurModel();
         $this->offreModel = new OffreModel();
         $this->entrepriseModel = new EntrepriseModel();
@@ -46,10 +46,8 @@ class DashboardController extends Controller {
         $totalOffres = count($this->offreModel->getAllOffres());
         $totalEntreprises = count($this->entrepriseModel->getAllEntreprises());
         
-        // Récupérer les rôles pour le formulaire de création d'utilisateur
         $roles = $this->utilisateurModel->getAllRoles();
         
-        // Récupérer les messages d'erreur ou de succès
         $error = isset($_GET['error']) ? $_GET['error'] : null;
         $success = isset($_GET['success']) ? $_GET['success'] : null;
         
@@ -77,7 +75,6 @@ class DashboardController extends Controller {
             $this->redirect('login');
         }
         
-        // Vérifier si l'utilisateur a les permissions nécessaires
         $userRole = $this->utilisateurModel->getUserRole($_SESSION['user_id']);
         $isAdmin = ($userRole['role_code'] === 'ADMIN');
         $isPilote = ($userRole['role_code'] === 'PILOTE');
@@ -95,26 +92,22 @@ class DashboardController extends Controller {
             $mot_de_passe = $_POST['mot_de_passe'] ?? '';
             $role = $_POST['role'] ?? '';
             
-            // Journaliser les données reçues pour le débogage
             error_log("Création d'utilisateur - Données reçues: " . 
                       "Nom: $nom, Prénom: $prenom, Email: $email, " . 
                       "Mot de passe: [masqué], Rôle: $role");
             
-            // Validation des données
             if (empty($nom) || empty($prenom) || empty($email) || empty($mot_de_passe) || empty($role)) {
                 error_log("Erreur de validation: champs manquants");
                 $this->redirect('dashboard', ['error' => 'Tous les champs sont obligatoires.']);
                 return;
             }
             
-            // Vérifier si le rôle est valide selon les permissions de l'utilisateur
             if ($role === 'PILOTE' && !$isAdmin) {
                 error_log("Erreur de permission: tentative de création d'un pilote par un non-admin");
                 $this->redirect('dashboard', ['error' => 'Vous n\'avez pas la permission de créer un pilote.']);
                 return;
             }
             
-            // Récupérer l'ID du rôle
             $roleId = $this->utilisateurModel->getRoleIdByCode($role);
             error_log("ID du rôle '$role': " . ($roleId ? $roleId : 'non trouvé'));
             
@@ -124,7 +117,6 @@ class DashboardController extends Controller {
                 return;
             }
             
-            // Créer l'utilisateur
             $result = $this->utilisateurModel->createUser($nom, $prenom, $email, $mot_de_passe, $roleId);
             error_log("Résultat de la création: " . json_encode($result));
             
