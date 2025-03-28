@@ -115,7 +115,8 @@ class UtilisateurModel {
     
     public function getAllRoles() {
         $sql = "SELECT * FROM Roles";
-        $stmt = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
         
         return $stmt->fetchAll();
     }

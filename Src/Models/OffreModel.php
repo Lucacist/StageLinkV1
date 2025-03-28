@@ -12,7 +12,8 @@ class OffreModel {
                 FROM Offres o
                 JOIN Entreprises e ON o.entreprise_id = e.id
                 ORDER BY o.date_debut DESC";
-        $stmt = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
         
         $offres = [];
         while ($row = $stmt->fetch()) {
@@ -177,14 +178,16 @@ class OffreModel {
 
     public function getAllCompetences() {
         $sql = "SELECT * FROM Competences ORDER BY nom ASC";
-        $stmt = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
         
         return $stmt->fetchAll();
     }
     
     public function countAllOffres() {
         $sql = "SELECT COUNT(*) as total FROM Offres";
-        $stmt = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
         $row = $stmt->fetch();
         return $row['total'];
     }
@@ -194,10 +197,12 @@ class OffreModel {
                 FROM Offres o
                 JOIN Entreprises e ON o.entreprise_id = e.id
                 ORDER BY o.date_debut DESC
-                LIMIT ?, ?";
+                LIMIT :offset, :limit";
         
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$offset, $limit]);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
         
         $offres = [];
         while ($row = $stmt->fetch()) {

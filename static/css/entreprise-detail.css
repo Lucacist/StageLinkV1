@@ -56,55 +56,60 @@
 .entreprise-details .admin-actions {
   display: flex;
   gap: 10px;
-  margin-top: 10px;
 }
 
 .entreprise-details .btn-edit,
-.entreprise-details .btn-delete,
-.entreprise-details .btn-cancel,
-.entreprise-details .btn-submit {
+.btn-delete,
+.btn-cancel,
+.btn-submit {
   padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
+  color: var(--couleur-button);
+  border-radius: 50px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
   transition: background-color 0.3s, transform 0.2s;
 }
 
-.entreprise-details .btn-edit {
-  background-color: var(--primary-color);
-  color: white;
+.entreprise-details .btn-edit,
+.btn-cancel {
+  background-color: transparent;
+  border: 1px solid #99afff;
+  color: #99afff;
 }
 
-.entreprise-details .btn-edit:hover {
-  background-color: #0056b3;
+.entreprise-details .btn-edit:hover,
+.btn-cancel:hover {
+  background-color: #99afff;
+  color: var(--texte-button);
   transform: translateY(-2px);
 }
 
-.entreprise-details .btn-delete {
-  background-color: #dc3545;
-  color: white;
+.btn-delete {
+  background-color: transparent;
+  border: 1px solid #ff8585;
+  color: #ff8585;
 }
 
-.entreprise-details .btn-delete:hover {
-  background-color: #c82333;
+.btn-delete:hover {
+  background-color: #ff8585;
+  color: var(--texte-button);
   transform: translateY(-2px);
 }
 
-.entreprise-details .btn-cancel {
-  background-color: #6c757d;
-  color: white;
+.btn-submit {
+  background-color: transparent;
+  border: 1px solid #26cc55;
+  color: #26cc55;
+}
+.btn-submit:hover {
+  background-color: #26cc55;
+  color: var(--texte-button);
+  transform: translateY(-2px);
 }
 
 .entreprise-details .btn-cancel:hover {
   background-color: #5a6268;
-}
-
-.entreprise-details .btn-submit {
-  background-color: var(--primary-color);
-  color: white;
-  padding: 10px 20px;
 }
 
 .entreprise-details .btn-submit:hover {
@@ -112,29 +117,35 @@
 }
 
 /* Styles pour les modals */
-.entreprise-details .modal {
+.modal {
   display: none; /* Caché par défaut */
   position: fixed;
   z-index: 1000;
   left: 0;
   top: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   overflow: auto;
   background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
 }
 
-.entreprise-details .modal-content {
-  background-color: white;
-  margin: 10% auto;
-  padding: 2rem;
+.modal-content {
+  background-color: var(--couleur-container);
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
   border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 80%;
   max-width: 500px;
   position: relative;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.entreprise-details .close {
+.close {
   position: absolute;
   right: 1rem;
   top: 0.5rem;
@@ -144,61 +155,62 @@
   cursor: pointer;
 }
 
-.entreprise-details .close:hover,
-.entreprise-details .close:focus {
+.close:hover,
+.close:focus {
   color: black;
   text-decoration: none;
 }
 
-.entreprise-details .warning {
+.warning {
   color: #dc3545;
   font-weight: bold;
   margin: 1rem 0;
 }
 
 /* Styles pour le formulaire dans le modal */
-.entreprise-details .form-entreprise {
+.form-entreprise {
   display: flex;
   flex-direction: column;
   gap: 15px;
 }
 
-.entreprise-details .form-group {
+.form-group {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
-.entreprise-details .form-group label {
+.form-group label {
   font-weight: 500;
 }
 
-.entreprise-details .form-group input,
-.entreprise-details .form-group textarea {
+.form-group input,
+.form-group textarea {
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
 }
 
-.entreprise-details .form-group textarea {
+.form-group textarea {
   resize: vertical;
   min-height: 100px;
 }
 
-.entreprise-details .form-group small {
+.form-group small {
   font-size: 12px;
   color: #666;
 }
 
-.entreprise-details .form-actions {
+.form-actions {
   display: flex;
   justify-content: space-between;
   margin-top: 10px;
 }
 
 /* Boîtes d'informations */
-.entreprise-details .info-box {
+
+.info-box {
   background-color: var(--couleur-container);
   border-radius: 8px;
   padding: 20px;
@@ -370,12 +382,6 @@
   color: #666;
 }
 
-.entreprise-details .add-avis {
-  margin-bottom: 30px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 20px;
-}
-
 .entreprise-details .add-avis h3 {
   font-size: 18px;
   margin-bottom: 15px;
@@ -438,12 +444,12 @@
 }
 
 .entreprise-details #submit-rating {
-  display: block;
+  display: flex;
   padding: 10px 20px;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 4px;
+  color: var(--couleur-texte);
+  background-color: transparent;
+  border: 1px solid var(--couleur-button);
+  border-radius: 50px;
   cursor: pointer;
   font-weight: bold;
   opacity: 0.5;
@@ -453,6 +459,12 @@
 .entreprise-details #submit-rating.active {
   opacity: 1;
   pointer-events: auto;
+  background-color: var(--couleur-button);
+  color: var(--texte-button);
+}
+
+.entreprise-details #submit-rating.active:hover {
+  background-color: var(--couleur-button);
 }
 
 .entreprise-details .btn-submit {
@@ -499,11 +511,14 @@
   grid-template-columns: 40px 1fr 40px;
   align-items: center;
   gap: 10px;
+  margin-bottom: 8px;
 }
 
 .entreprise-details .rating-label {
   font-size: 14px;
   text-align: center;
+  color: #333;
+  font-weight: bold;
 }
 
 .entreprise-details .bar-container {
@@ -511,17 +526,23 @@
   height: 12px;
   border-radius: 6px;
   overflow: hidden;
+  width: 100%;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .entreprise-details .bar {
   height: 100%;
   background-color: var(--couleur-avis);
+  border-radius: 6px;
+  transition: width 0.5s ease-in-out;
+  min-width: 5px;
 }
 
 .entreprise-details .rating-count {
   font-size: 14px;
   color: #666;
   text-align: right;
+  font-weight: bold;
 }
 
 .entreprise-details .avis-list {
@@ -566,20 +587,20 @@
   .entreprise-details {
     margin: 1rem auto;
   }
-  
+
   .entreprise-details .offres-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .entreprise-details .rating-input {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .entreprise-details .rating-bar {
     grid-template-columns: 40px 1fr 30px;
   }
-  
+
   .entreprise-details .avis-header {
     flex-direction: column;
     gap: 5px;
