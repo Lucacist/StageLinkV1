@@ -3,7 +3,7 @@ require_once ROOT_PATH . '/src/Controllers/Controller.php';
 
 class AccueilController extends Controller {
     public function __construct() {
-        parent::__construct(); // Appel au constructeur parent pour initialiser Twig
+        parent::__construct();
     }
     
     public function index() {
@@ -12,4 +12,3 @@ class AccueilController extends Controller {
         ]);
     }
 }
-?>

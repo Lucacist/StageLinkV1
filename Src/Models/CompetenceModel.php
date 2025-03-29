@@ -9,38 +9,25 @@ class CompetenceModel {
     
     public function getAllCompetences() {
         $sql = "SELECT * FROM Competences ORDER BY nom";
-        $result = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
         
-        $competences = [];
-        while ($row = $result->fetch_assoc()) {
-            $competences[] = $row;
-        }
-        
-        return $competences;
+        return $stmt->fetchAll();
     }
     
     public function getCompetenceById($id) {
         $sql = "SELECT * FROM Competences WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$id]);
         
-        if ($result->num_rows === 0) {
-            return null;
-        }
-        
-        return $result->fetch_assoc();
+        return $stmt->fetch() ?: null;
     }
     
     public function createCompetence($nom) {
-        // Vérifier si la compétence existe déjà
         $sql = "SELECT COUNT(*) as count FROM Competences WHERE nom = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("s", $nom);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
+        $stmt->execute([$nom]);
+        $row = $stmt->fetch();
         
         if ($row['count'] > 0) {
             return ['success' => false, 'message' => 'Cette compétence existe déjà.'];
@@ -48,28 +35,26 @@ class CompetenceModel {
         
         $sql = "INSERT INTO Competences (nom) VALUES (?)";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("s", $nom);
         
-        if ($stmt->execute()) {
-            return ['success' => true, 'id' => $this->db->insert_id];
+        try {
+            $stmt->execute([$nom]);
+            return ['success' => true, 'id' => $this->db->getLastInsertId()];
+        } catch (PDOException $e) {
+            return ['success' => false, 'message' => 'Erreur lors de la création de la compétence: ' . $e->getMessage()];
         }
-        
-        return ['success' => false, 'message' => 'Erreur lors de la création de la compétence: ' . $stmt->error];
     }
     
     public function updateCompetence($id, $nom) {
         $sql = "UPDATE Competences SET nom = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("si", $nom, $id);
         
-        return $stmt->execute();
+        return $stmt->execute([$nom, $id]);
     }
     
     public function deleteCompetence($id) {
         $sql = "DELETE FROM Competences WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $id);
         
-        return $stmt->execute();
+        return $stmt->execute([$id]);
     }
 }

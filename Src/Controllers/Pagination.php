@@ -11,7 +11,6 @@ class Pagination {
         $this->currentPage = max(1, $currentPage);
         $this->totalPages = ceil($this->totalItems / $this->itemsPerPage);
         
-        // Ajustement si page courante dépasse le total
         if ($this->currentPage > $this->totalPages && $this->totalPages > 0) {
             $this->currentPage = $this->totalPages;
         }
@@ -49,7 +48,6 @@ class Pagination {
         $html = '<div class="pagination-container">';
         $html .= '<ul class="pagination">';
         
-        // Ajouter le paramètre page aux URLs existantes
         $urlPrefix = $baseUrl;
         if (strpos($baseUrl, '?') !== false) {
             $urlPrefix .= '&page=';
@@ -57,14 +55,12 @@ class Pagination {
             $urlPrefix .= '?page=';
         }
         
-        // Bouton "Précédent"
         if ($this->hasPrevious()) {
             $html .= '<li><a href="' . $urlPrefix . ($this->currentPage - 1) . '" class="pagination-item">&laquo; Précédent</a></li>';
         } else {
             $html .= '<li><span class="pagination-item disabled">&laquo; Précédent</span></li>';
         }
         
-        // Affichage des pages
         $startPage = max(1, $this->currentPage - 2);
         $endPage = min($this->totalPages, $startPage + 4);
         
@@ -90,7 +86,6 @@ class Pagination {
             $html .= '<li><a href="' . $urlPrefix . $this->totalPages . '" class="pagination-item">' . $this->totalPages . '</a></li>';
         }
         
-        // Bouton "Suivant"
         if ($this->hasNext()) {
             $html .= '<li><a href="' . $urlPrefix . ($this->currentPage + 1) . '" class="pagination-item">Suivant &raquo;</a></li>';
         } else {

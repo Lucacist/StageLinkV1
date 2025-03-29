@@ -12,10 +12,11 @@ class OffreModel {
                 FROM Offres o
                 JOIN Entreprises e ON o.entreprise_id = e.id
                 ORDER BY o.date_debut DESC";
-        $result = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
         
         $offres = [];
-        while ($row = $result->fetch_assoc()) {
+        while ($row = $stmt->fetch()) {
             $row['competences'] = $this->getCompetencesForOffre($row['id']);
             $offres[] = $row;
         }
@@ -36,11 +37,10 @@ class OffreModel {
                 GROUP BY o.id";
         
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$id]);
         
-        if ($row = $result->fetch_assoc()) {
+        $row = $stmt->fetch();
+        if ($row) {
             $row['competences'] = $this->getCompetencesForOffre($id);
             return $row;
         }
@@ -52,36 +52,36 @@ class OffreModel {
         $sql = "INSERT INTO Offres (entreprise_id, titre, description, base_remuneration, date_debut, date_fin) 
                 VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("issdss", $entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin);
         
-        if (!$stmt->execute()) {
-            error_log("Erreur lors de la création de l'offre: " . $stmt->error);
+        try {
+            $stmt->execute([$entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin]);
+            $offreId = $this->db->getLastInsertId();
+            error_log("Offre créée avec l'ID: " . $offreId);
+            
+            if (!empty($competences) && $offreId) {
+                foreach ($competences as $competenceId) {
+                    $this->addOffreCompetence($offreId, $competenceId);
+                }
+            }
+            
+            return $offreId;
+        } catch (PDOException $e) {
+            error_log("Erreur lors de la création de l'offre: " . $e->getMessage());
             return false;
         }
-        
-        $offreId = $this->db->getLastInsertId();
-        error_log("Offre créée avec l'ID: " . $offreId);
-        
-        if (!empty($competences) && $offreId) {
-            foreach ($competences as $competenceId) {
-                $this->addOffreCompetence($offreId, $competenceId);
-            }
-        }
-        
-        return $offreId;
     }
     
     public function addOffreCompetence($offreId, $competenceId) {
         $sql = "INSERT INTO Offres_Competences (offre_id, competence_id) VALUES (?, ?)";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("ii", $offreId, $competenceId);
         
-        if (!$stmt->execute()) {
-            error_log("Erreur lors de l'ajout de la compétence $competenceId à l'offre $offreId: " . $stmt->error);
+        try {
+            $stmt->execute([$offreId, $competenceId]);
+            return true;
+        } catch (PDOException $e) {
+            error_log("Erreur lors de l'ajout de la compétence $competenceId à l'offre $offreId: " . $e->getMessage());
             return false;
         }
-        
-        return true;
     }
     
     public function addOffreCompetences($offreId, $competenceIds) {
@@ -98,16 +98,17 @@ class OffreModel {
         $stmt = $this->db->prepare($sql);
         
         if (!$stmt) {
-            error_log("Erreur préparation requête: " . $this->db->error);
+            error_log("Erreur préparation requête: " . $this->db->getConnection()->errorInfo()[2]);
             return false;
         }
         
         $success = true;
         foreach ($competenceIds as $competenceId) {
             error_log("Ajout compétence $competenceId à l'offre $offreId");
-            $stmt->bind_param("ii", $offreId, $competenceId);
-            if (!$stmt->execute()) {
-                error_log("Erreur lors de l'ajout de la compétence $competenceId: " . $stmt->error);
+            try {
+                $stmt->execute([$offreId, $competenceId]);
+            } catch (PDOException $e) {
+                error_log("Erreur lors de l'ajout de la compétence $competenceId: " . $e->getMessage());
                 $success = false;
             }
         }
@@ -118,25 +119,22 @@ class OffreModel {
     public function deleteOffreCompetences($offreId) {
         $sql = "DELETE FROM Offres_Competences WHERE offre_id = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $offreId);
         
-        return $stmt->execute();
+        return $stmt->execute([$offreId]);
     }
     
     public function updateOffre($id, $entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin) {
         $sql = "UPDATE Offres SET entreprise_id = ?, titre = ?, description = ?, base_remuneration = ?, date_debut = ?, date_fin = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("issdssi", $entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin, $id);
         
-        return $stmt->execute();
+        return $stmt->execute([$entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin, $id]);
     }
     
     public function deleteOffre($id) {
         $sql = "DELETE FROM Offres WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $id);
         
-        return $stmt->execute();
+        return $stmt->execute([$id]);
     }
     
     public function getOffreCompetences($offreId) {
@@ -146,16 +144,9 @@ class OffreModel {
                 WHERE oc.offre_id = ?
                 ORDER BY c.nom";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $offreId);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$offreId]);
         
-        $competences = [];
-        while ($row = $result->fetch_assoc()) {
-            $competences[] = $row;
-        }
-        
-        return $competences;
+        return $stmt->fetchAll();
     }
     
     public function getCompetencesForOffre($offreId) {
@@ -167,10 +158,8 @@ class OffreModel {
                 FROM WishList 
                 WHERE offre_id = ? AND utilisateur_id = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("ii", $offreId, $utilisateurId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
+        $stmt->execute([$offreId, $utilisateurId]);
+        $row = $stmt->fetch();
         
         return $row['count'] > 0;
     }
@@ -179,33 +168,27 @@ class OffreModel {
         if ($this->isOffreLiked($offreId, $utilisateurId)) {
             $sql = "DELETE FROM WishList WHERE offre_id = ? AND utilisateur_id = ?";
             $stmt = $this->db->prepare($sql);
-            $stmt->bind_param("ii", $offreId, $utilisateurId);
-            return $stmt->execute();
+            return $stmt->execute([$offreId, $utilisateurId]);
         } else {
             $sql = "INSERT INTO WishList (offre_id, utilisateur_id) VALUES (?, ?)";
             $stmt = $this->db->prepare($sql);
-            $stmt->bind_param("ii", $offreId, $utilisateurId);
-            return $stmt->execute();
+            return $stmt->execute([$offreId, $utilisateurId]);
         }
     }
 
     public function getAllCompetences() {
         $sql = "SELECT * FROM Competences ORDER BY nom ASC";
-        $result = $this->db->getConnection()->query($sql);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
         
-        $competences = [];
-        if ($result) {
-            while ($row = $result->fetch_assoc()) {
-                $competences[] = $row;
-            }
-        }
-        
-        return $competences;
+        return $stmt->fetchAll();
     }
+    
     public function countAllOffres() {
         $sql = "SELECT COUNT(*) as total FROM Offres";
-        $result = $this->db->query($sql);
-        $row = $result->fetch_assoc();
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $row = $stmt->fetch();
         return $row['total'];
     }
     
@@ -214,15 +197,15 @@ class OffreModel {
                 FROM Offres o
                 JOIN Entreprises e ON o.entreprise_id = e.id
                 ORDER BY o.date_debut DESC
-                LIMIT ?, ?";
+                LIMIT :offset, :limit";
         
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("ii", $offset, $limit);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
-        $result = $stmt->get_result();
         
         $offres = [];
-        while ($row = $result->fetch_assoc()) {
+        while ($row = $stmt->fetch()) {
             $row['competences'] = $this->getCompetencesForOffre($row['id']);
             $offres[] = $row;
         }

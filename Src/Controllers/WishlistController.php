@@ -4,12 +4,12 @@ require_once ROOT_PATH . '/src/Models/OffreModel.php';
 
 class WishlistController extends Controller {
     private $offreModel;
-    private $db; // Ajout de la propriété pour la connexion à la base de données
+    private $db;
     
     public function __construct() {
         parent::__construct(); // Appel au constructeur parent pour initialiser Twig
         $this->offreModel = new OffreModel();
-        $this->db = Database::getInstance()->getConnection(); // Initialisation de la connexion à la base de données
+        $this->db = Database::getInstance()->getConnection();
     }   
     
     public function toggleLike() {
@@ -88,7 +88,7 @@ class WishlistController extends Controller {
                 WHERE w.utilisateur_id = ?
                 ORDER BY o.date_debut DESC";
                 
-        $stmt = $this->db->prepare($sql); // Utilisation de $this->db
+        $stmt = $this->db->prepare($sql); 
         $stmt->bind_param("i", $_SESSION['user_id']);
         $stmt->execute();
         $result = $stmt->get_result();

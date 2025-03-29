@@ -8,7 +8,7 @@ class OffreController extends Controller {
     private $entrepriseModel;
     
     public function __construct() {
-        parent::__construct(); // Appel au constructeur parent pour initialiser Twig
+        parent::__construct();
         $this->offreModel = new OffreModel();
         $this->entrepriseModel = new EntrepriseModel();
     }
@@ -16,25 +16,19 @@ class OffreController extends Controller {
     public function index() {
         $this->checkPageAccess('VOIR_OFFRE');
         
-        // Inclure la classe Pagination
         require_once ROOT_PATH . '/src/Controllers/Pagination.php';
         
-        // Récupérer le numéro de page depuis l'URL
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         
-        // Nombre total d'offres
         $totalOffres = $this->offreModel->countAllOffres();
         
-        // Créer l'objet pagination (10 offres par page)
         $pagination = new Pagination($totalOffres, 5, $page);
         
-        // Récupérer les offres pour la page actuelle
         $offres = $this->offreModel->getOffresWithPagination(
             $pagination->getLimit(), 
             $pagination->getOffset()
         );
         
-        // Ajouter les détails supplémentaires (compétences, likes)
         foreach ($offres as &$offre) {
             if (isset($_SESSION['user_id'])) {
                 $offre['isLiked'] = $this->offreModel->isOffreLiked($offre['id'], $_SESSION['user_id']);
@@ -43,7 +37,6 @@ class OffreController extends Controller {
             }
         }
         
-        // URL de base pour les liens de pagination
         $baseUrl = 'index.php?route=offres';
         
         echo $this->render('offres', [
@@ -78,7 +71,6 @@ class OffreController extends Controller {
             session_start();
         }
         
-        // Vérifier si un message est présent dans l'URL et le traiter
         if (isset($_GET['message'])) {
             $message = $_GET['message'];
             if ($message === 'candidature_success') {
@@ -97,13 +89,11 @@ class OffreController extends Controller {
         if (isset($_SESSION['user_id'])) {
             $isLiked = $this->offreModel->isOffreLiked($id, $_SESSION['user_id']);
             
-            // Vérifier si l'utilisateur a déjà postulé à cette offre
             require_once ROOT_PATH . '/src/Models/CandidatureModel.php';
             $candidatureModel = new CandidatureModel();
             $hasApplied = $candidatureModel->candidatureExiste($_SESSION['user_id'], $id);
         }
         
-        // Stocker le message flash dans une variable temporaire et le supprimer de la session
         $flash = isset($_SESSION['flash']) ? $_SESSION['flash'] : null;
         if (isset($_SESSION['flash'])) {
             unset($_SESSION['flash']);
