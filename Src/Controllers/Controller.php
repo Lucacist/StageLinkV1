@@ -62,11 +62,24 @@ class Controller {
     }
     
     protected function redirect($route, $params = []) {
-        $url = 'index.php?route=' . $route;
+        // Utiliser des URLs propres si possible
+        $useCleanUrls = true;
         
-        if (!empty($params)) {
-            foreach ($params as $key => $value) {
-                $url .= '&' . $key . '=' . urlencode($value);
+        if ($useCleanUrls) {
+            $url = '/StageLinkV1/' . $route;
+            
+            // Ajouter les paramètres s'il y en a
+            if (!empty($params)) {
+                $url .= '?' . http_build_query($params);
+            }
+        } else {
+            // Fallback vers l'ancien format d'URL
+            $url = 'index.php?route=' . $route;
+            
+            if (!empty($params)) {
+                foreach ($params as $key => $value) {
+                    $url .= '&' . $key . '=' . urlencode($value);
+                }
             }
         }
         
