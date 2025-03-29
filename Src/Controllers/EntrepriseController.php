@@ -16,24 +16,45 @@ class EntrepriseController extends Controller {
         $this->checkPageAccess('VOIR_ENTREPRISE');
         
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
         
-        $totalEntreprises = $this->entrepriseModel->countAllEntreprises();
-        
-        $pagination = new Pagination($totalEntreprises, 5, $page);
-        
-        $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
-        $entreprises = $this->entrepriseModel->getEntreprisesWithPaginationAndRatings(
-            $pagination->getLimit(), 
-            $pagination->getOffset(),
-            $userId
-        );
+        if (!empty($searchTerm)) {
+            // Recherche avec terme
+            $totalEntreprises = $this->entrepriseModel->countEntreprisesBySearch($searchTerm);
+            
+            $pagination = new Pagination($totalEntreprises, 5, $page);
+            
+            $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+            $entreprises = $this->entrepriseModel->searchEntreprises(
+                $searchTerm,
+                $pagination->getLimit(), 
+                $pagination->getOffset(),
+                $userId
+            );
+        } else {
+            // Sans recherche
+            $totalEntreprises = $this->entrepriseModel->countAllEntreprises();
+            
+            $pagination = new Pagination($totalEntreprises, 5, $page);
+            
+            $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+            $entreprises = $this->entrepriseModel->getEntreprisesWithPaginationAndRatings(
+                $pagination->getLimit(), 
+                $pagination->getOffset(),
+                $userId
+            );
+        }
         
         $baseUrl = 'index.php?route=entreprises';
+        if (!empty($searchTerm)) {
+            $baseUrl .= '&search=' . urlencode($searchTerm);
+        }
         
         echo $this->render('Entreprises', [
             'pageTitle' => 'Entreprises - StageLink',
             'entreprises' => $entreprises,
-            'pagination' => $pagination->renderHtml($baseUrl)
+            'pagination' => $pagination->renderHtml($baseUrl),
+            'searchTerm' => $searchTerm
         ]);
     }
     
@@ -77,6 +98,7 @@ class EntrepriseController extends Controller {
         error_log("POST data: " . print_r($_POST, true));
         
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            error_log("Méthode HTTP non autorisée: " . $_SERVER['REQUEST_METHOD']);
             $this->redirect('dashboard');
             return;
         }
@@ -93,16 +115,25 @@ class EntrepriseController extends Controller {
         
         $errors = [];
         
-        if (empty($nom)) {
-            $errors[] = "Le nom de l'entreprise est requis.";
-        }
-        
-        if (empty($description)) {
-            $errors[] = "La description de l'entreprise est requise.";
-        }
-        
-        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = "Une adresse email valide est requise.";
+        // Pour l'action delete, on ne vérifie que l'ID
+        if ($action === 'delete') {
+            if ($id <= 0) {
+                $errors[] = "ID d'entreprise invalide pour la suppression.";
+                error_log("ID d'entreprise invalide pour la suppression: " . $id);
+            }
+        } else {
+            // Pour les autres actions, on vérifie tous les champs
+            if (empty($nom)) {
+                $errors[] = "Le nom de l'entreprise est requis.";
+            }
+            
+            if (empty($description)) {
+                $errors[] = "La description de l'entreprise est requise.";
+            }
+            
+            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $errors[] = "Une adresse email valide est requise.";
+            }
         }
         
         if (empty($errors)) {
@@ -129,6 +160,16 @@ class EntrepriseController extends Controller {
                 }
             } elseif ($action === 'delete' && $id > 0) {
                 error_log("Tentative de suppression de l'entreprise ID: " . $id);
+                
+                // Vérifier si l'entreprise existe avant de tenter de la supprimer
+                $entreprise = $this->entrepriseModel->getEntrepriseById($id);
+                if (!$entreprise) {
+                    error_log("Entreprise ID: " . $id . " n'existe pas");
+                    $_SESSION['error_message'] = "L'entreprise n'existe pas.";
+                    $this->redirect('entreprises');
+                    return;
+                }
+                
                 $success = $this->entrepriseModel->deleteEntreprise($id);
                 error_log("Résultat de la suppression: " . ($success ? "Succès" : "Échec"));
                 

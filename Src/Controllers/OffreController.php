@@ -2,6 +2,7 @@
 require_once ROOT_PATH . '/src/Controllers/Controller.php';
 require_once ROOT_PATH . '/src/Models/OffreModel.php';
 require_once ROOT_PATH . '/src/Models/EntrepriseModel.php';
+require_once ROOT_PATH . '/src/Controllers/Pagination.php';
 
 class OffreController extends Controller {
     private $offreModel;
@@ -16,18 +17,35 @@ class OffreController extends Controller {
     public function index() {
         $this->checkPageAccess('VOIR_OFFRE');
         
-        require_once ROOT_PATH . '/src/Controllers/Pagination.php';
-        
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
         
-        $totalOffres = $this->offreModel->countAllOffres();
-        
-        $pagination = new Pagination($totalOffres, 5, $page);
-        
-        $offres = $this->offreModel->getOffresWithPagination(
-            $pagination->getLimit(), 
-            $pagination->getOffset()
-        );
+        if (!empty($searchTerm)) {
+            // Recherche avec terme
+            $totalOffres = $this->offreModel->countOffresBySearch($searchTerm);
+            
+            $pagination = new Pagination($totalOffres, 5, $page);
+            
+            $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+            $offres = $this->offreModel->searchOffres(
+                $searchTerm,
+                $pagination->getLimit(), 
+                $pagination->getOffset(),
+                $userId
+            );
+        } else {
+            // Sans recherche
+            $totalOffres = $this->offreModel->countAllOffres();
+            
+            $pagination = new Pagination($totalOffres, 5, $page);
+            
+            $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+            $offres = $this->offreModel->getOffresWithPagination(
+                $pagination->getLimit(), 
+                $pagination->getOffset(),
+                $userId
+            );
+        }
         
         foreach ($offres as &$offre) {
             if (isset($_SESSION['user_id'])) {
@@ -38,14 +56,17 @@ class OffreController extends Controller {
         }
         
         $baseUrl = 'index.php?route=offres';
+        if (!empty($searchTerm)) {
+            $baseUrl .= '&search=' . urlencode($searchTerm);
+        }
         
         echo $this->render('offres', [
             'pageTitle' => 'Offres de stage - StageLink',
             'offres' => $offres,
-            'pagination' => $pagination->renderHtml($baseUrl)
+            'pagination' => $pagination->renderHtml($baseUrl),
+            'searchTerm' => $searchTerm
         ]);
     }
-    
     
     public function details() {
         $this->checkPageAccess('VOIR_OFFRE');

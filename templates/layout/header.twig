@@ -1,9 +1,10 @@
 <header>
     <div class="first-bar">
         <div class="stagelink">StageLink</div>
-        <form onsubmit="return false;" {% if app.request.get.route == 'accueil' or app.request.get.route == 'dashboard' %}style="display: none;"{% endif %}>
-            <input type="text" id="searchInput" placeholder="{% if app.request.get.route == 'offres' %}Rechercher une offre...{% elseif app.request.get.route == 'entreprises' %}Rechercher une entreprise...{% else %}Rechercher...{% endif %}" />
-            <button type="button"><img src="static/images/search.svg" alt="Rechercher" /></button>
+        <form action="{{ app.request.get.route == 'offres' ? 'index.php?route=offres' : (app.request.get.route == 'entreprises' ? 'index.php?route=entreprises' : '#') }}" method="GET" {% if app.request.get.route == 'accueil' or app.request.get.route == 'dashboard' %}style="display: none;"{% endif %}>
+            <input type="hidden" name="route" value="{{ app.request.get.route }}">
+            <input type="text" id="searchInput" name="search" placeholder="{% if app.request.get.route == 'offres' %}Rechercher une offre...{% elseif app.request.get.route == 'entreprises' %}Rechercher une entreprise...{% else %}Rechercher...{% endif %}" value="{{ searchTerm|default('') }}" />
+            <button type="submit"><img src="static/images/search.svg" alt="Rechercher" /></button>
         </form>
         <div class="compte" id="compte-menu">
             <img src="static/images/compte.svg" alt="Mon compte" />

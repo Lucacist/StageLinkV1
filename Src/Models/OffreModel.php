@@ -192,6 +192,43 @@ class OffreModel {
         return $row['total'];
     }
     
+    public function countOffresBySearch($searchTerm) {
+        $searchTerm = '%' . $searchTerm . '%';
+        $sql = "SELECT COUNT(*) as total FROM Offres WHERE titre LIKE :searchTerm";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':searchTerm', $searchTerm, PDO::PARAM_STR);
+        $stmt->execute();
+        $row = $stmt->fetch();
+        return $row['total'];
+    }
+    
+    public function searchOffres($searchTerm, $limit, $offset, $userId = null) {
+        $searchTerm = '%' . $searchTerm . '%';
+        $sql = "SELECT o.*, e.nom as entreprise_nom 
+                FROM Offres o
+                JOIN Entreprises e ON o.entreprise_id = e.id
+                WHERE o.titre LIKE :searchTerm
+                ORDER BY o.date_debut DESC
+                LIMIT :offset, :limit";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':searchTerm', $searchTerm, PDO::PARAM_STR);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        $offres = [];
+        while ($row = $stmt->fetch()) {
+            $row['competences'] = $this->getCompetencesForOffre($row['id']);
+            if ($userId) {
+                $row['is_wishlisted'] = $this->isOffreLiked($row['id'], $userId);
+            }
+            $offres[] = $row;
+        }
+        
+        return $offres;
+    }
+    
     public function getOffresWithPagination($limit, $offset) {
         $sql = "SELECT o.*, e.nom as entreprise_nom 
                 FROM Offres o

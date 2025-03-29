@@ -14,6 +14,44 @@ class EntrepriseModel {
         $row = $stmt->fetch();
         return $row['total'];
     }
+    
+    public function countEntreprisesBySearch($searchTerm) {
+        $searchTerm = '%' . $searchTerm . '%';
+        $sql = "SELECT COUNT(*) as total FROM Entreprises WHERE nom LIKE :searchTerm";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':searchTerm', $searchTerm, PDO::PARAM_STR);
+        $stmt->execute();
+        $row = $stmt->fetch();
+        return $row['total'];
+    }
+    
+    public function searchEntreprises($searchTerm, $limit, $offset, $userId = null) {
+        $searchTerm = '%' . $searchTerm . '%';
+        $sql = "SELECT e.*, 
+                COALESCE(AVG(ev.note), 0) as note_moyenne,
+                COUNT(ev.id) as nombre_avis,
+                user_eval.note as user_note
+                FROM Entreprises e
+                LEFT JOIN Evaluations ev ON e.id = ev.entreprise_id
+                LEFT JOIN (
+                    SELECT entreprise_id, note 
+                    FROM Evaluations 
+                    WHERE utilisateur_id = :userId
+                ) user_eval ON e.id = user_eval.entreprise_id
+                WHERE e.nom LIKE :searchTerm
+                GROUP BY e.id
+                ORDER BY e.nom
+                LIMIT :offset, :limit";
+    
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':searchTerm', $searchTerm, PDO::PARAM_STR);
+        $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+    
+        return $stmt->fetchAll();
+    }
 
     public function getEntreprisesWithPaginationAndRatings($limit, $offset, $userId = null) {
         $sql = "SELECT e.*, 
@@ -152,6 +190,7 @@ class EntrepriseModel {
         $this->db->getConnection()->beginTransaction();
         
         try {
+            // Vérifier si l'entreprise existe
             $checkSql = "SELECT id FROM Entreprises WHERE id = :id";
             $checkStmt = $this->db->prepare($checkSql);
             $checkStmt->bindParam(':id', $id, PDO::PARAM_INT);
@@ -162,31 +201,49 @@ class EntrepriseModel {
                 return false;
             }
             
-            $sqlEvaluations = "DELETE FROM Evaluations WHERE entreprise_id = :id";
-            $stmtEvaluations = $this->db->prepare($sqlEvaluations);
-            $stmtEvaluations->bindParam(':id', $id, PDO::PARAM_INT);
-            $stmtEvaluations->execute();
-            error_log("Évaluations supprimées pour l'entreprise ID: $id");
+            // 1. Supprimer les entrées dans la table Wishlist liées aux offres de cette entreprise
+            $sqlWishlist = "DELETE FROM Wishlist WHERE offre_id IN (SELECT id FROM Offres WHERE entreprise_id = :id)";
+            $stmtWishlist = $this->db->prepare($sqlWishlist);
+            $stmtWishlist->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmtWishlist->execute();
+            error_log("Entrées Wishlist supprimées pour les offres de l'entreprise ID: $id");
             
+            // 2. Supprimer les compétences liées aux offres de cette entreprise
+            $sqlCompetencesOffres = "DELETE FROM Offres_Competences WHERE offre_id IN (SELECT id FROM Offres WHERE entreprise_id = :id)";
+            $stmtCompetencesOffres = $this->db->prepare($sqlCompetencesOffres);
+            $stmtCompetencesOffres->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmtCompetencesOffres->execute();
+            error_log("Compétences des offres supprimées pour l'entreprise ID: $id");
+            
+            // 3. Supprimer les candidatures liées aux offres de cette entreprise
             $sqlCandidatures = "DELETE FROM Candidatures WHERE offre_id IN (SELECT id FROM Offres WHERE entreprise_id = :id)";
             $stmtCandidatures = $this->db->prepare($sqlCandidatures);
             $stmtCandidatures->bindParam(':id', $id, PDO::PARAM_INT);
             $stmtCandidatures->execute();
             error_log("Candidatures supprimées pour l'entreprise ID: $id");
             
+            // 4. Supprimer les évaluations liées à cette entreprise
+            $sqlEvaluations = "DELETE FROM Evaluations WHERE entreprise_id = :id";
+            $stmtEvaluations = $this->db->prepare($sqlEvaluations);
+            $stmtEvaluations->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmtEvaluations->execute();
+            error_log("Évaluations supprimées pour l'entreprise ID: $id");
+            
+            // 5. Supprimer les offres liées à cette entreprise
             $sqlOffres = "DELETE FROM Offres WHERE entreprise_id = :id";
             $stmtOffres = $this->db->prepare($sqlOffres);
             $stmtOffres->bindParam(':id', $id, PDO::PARAM_INT);
             $stmtOffres->execute();
             error_log("Offres supprimées pour l'entreprise ID: $id");
             
+            // 6. Finalement, supprimer l'entreprise elle-même
             $sqlEntreprise = "DELETE FROM Entreprises WHERE id = :id";
             $stmtEntreprise = $this->db->prepare($sqlEntreprise);
             $stmtEntreprise->bindParam(':id', $id, PDO::PARAM_INT);
             $result = $stmtEntreprise->execute();
             
             if (!$result) {
-                error_log("Erreur lors de la suppression de l'entreprise ID: $id - " . $this->db->getConnection()->errorInfo()[2]);
+                error_log("Erreur lors de la suppression de l'entreprise ID: $id - " . print_r($this->db->getConnection()->errorInfo(), true));
                 $this->db->getConnection()->rollBack();
                 return false;
             }

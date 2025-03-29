@@ -130,7 +130,8 @@
     <div class="modal-content">
         <span class="close" onclick="closeEditModal()">&times;</span>
         <h3>Modifier l'entreprise</h3>
-        <form id="editEntrepriseForm" action="index.php?route=traiter_entreprise" method="POST" class="form-entreprise">
+        
+        <form id="editEntrepriseForm" action="/StageLinkV1/traiter_entreprise" method="POST">
             <input type="hidden" name="action" value="update">
             <input type="hidden" name="id" value="{{ entreprise.id }}">
             
@@ -138,17 +139,17 @@
                 <label for="edit_nom">Nom de l'entreprise</label>
                 <input type="text" id="edit_nom" name="nom" value="{{ entreprise.nom }}" required>
             </div>
-
+            
             <div class="form-group">
-                <label for="edit_description">Description de l'entreprise</label>
-                <textarea id="edit_description" name="description" rows="4" required>{{ entreprise.description }}</textarea>
+                <label for="edit_description">Description</label>
+                <textarea id="edit_description" name="description" rows="5" required>{{ entreprise.description }}</textarea>
             </div>
-
+            
             <div class="form-group">
                 <label for="edit_email">Email de contact</label>
                 <input type="email" id="edit_email" name="email" value="{{ entreprise.email }}" required>
             </div>
-
+            
             <div class="form-group">
                 <label for="edit_telephone">Téléphone de contact</label>
                 <input type="tel" id="edit_telephone" name="telephone" value="{{ entreprise.telephone }}" pattern="[0-9]{10}" required>
@@ -171,9 +172,13 @@
         <p>Êtes-vous sûr de vouloir supprimer l'entreprise <strong>{{ entreprise.nom }}</strong> ?</p>
         <p class="warning">Attention : Cette action est irréversible et supprimera également toutes les offres associées à cette entreprise.</p>
         
-        <form id="deleteEntrepriseForm" action="index.php?route=traiter_entreprise" method="POST">
+        <form id="deleteEntrepriseForm" action="/StageLinkV1/traiter_entreprise" method="POST">
             <input type="hidden" name="action" value="delete">
             <input type="hidden" name="id" value="{{ entreprise.id }}">
+            <input type="hidden" name="nom" value="{{ entreprise.nom }}">
+            <input type="hidden" name="description" value="{{ entreprise.description }}">
+            <input type="hidden" name="email" value="{{ entreprise.email }}">
+            <input type="hidden" name="telephone" value="{{ entreprise.telephone }}">
             
             <div class="form-actions">
                 <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Annuler</button>
