@@ -89,18 +89,13 @@ class WishlistController extends Controller {
                 ORDER BY o.date_debut DESC";
                 
         $stmt = $this->db->prepare($sql); 
-        $stmt->bind_param("i", $_SESSION['user_id']);
+        $stmt->bindParam(1, $_SESSION['user_id'], PDO::PARAM_INT);
         $stmt->execute();
-        $result = $stmt->get_result();
-        
-        $offres = [];
-        while ($row = $result->fetch_assoc()) {
-            $offres[] = $row;
-        }
+        $result = $stmt->fetchAll(PDO::FETCH_OBJ);
         
         echo $this->render('wishlist/wishlist', [
             'pageTitle' => 'Mes offres favorites - StageLink',
-            'offres' => $offres
+            'offres' => $result
         ]);
     }
 }
