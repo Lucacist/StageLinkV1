@@ -1,13 +1,13 @@
 <?php
 require_once ROOT_PATH . '/src/Controllers/Controller.php';
-require_once ROOT_PATH . '/src/Models/UtilisateurModel.php';
+require_once ROOT_PATH . '/src/Models/UserModel.php';
 
 class AuthController extends Controller {
-    private $utilisateurModel;
+    private $userModel;
     
     public function __construct() {
         parent::__construct();
-        $this->utilisateurModel = new UtilisateurModel();
+        $this->userModel = new UserModel();
     }
     
     public function login() {
@@ -16,35 +16,35 @@ class AuthController extends Controller {
         }
         
         if (isset($_SESSION['user_id'])) {
-            $this->redirect('accueil');
+            $this->redirect('homepage');
         }
         
         $error = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = $_POST['email'] ?? '';
-            $password = $_POST['mot_de_passe'] ?? '';
+            $password = $_POST['password'] ?? '';
             
-            $user = $this->utilisateurModel->authenticate($email, $password);
+            $user = $this->userModel->authenticate($email, $password);
             
             if ($user) {
                 $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_nom'] = $user['nom'];
-                $_SESSION['user_prenom'] = $user['prenom'];
+                $_SESSION['user_name'] = $user['name'];
+                $_SESSION['user_firstname'] = $user['firstname'];
                 
-                $role = $this->utilisateurModel->getUserRole($user['id']);
+                $role = $this->userModel->getUserRole($user['id']);
                 $_SESSION['user_role'] = $role['role_code'];
                 
-                $_SESSION['permissions'] = $this->utilisateurModel->getUserPermissions($user['id']);
+                $_SESSION['permissions'] = $this->userModel->getUserPermissions($user['id']);
                 
-                $this->redirect('accueil');
+                $this->redirect('homepage');
             } else {
-                $error = 'Email ou mot de passe incorrect';
+                $error = 'Incorrect email or password';
             }
         }
         
         echo $this->render('login', [
             'error' => $error,
-            'pageTitle' => 'Connexion - StageLink'
+            'pageTitle' => 'Connection - StageLink'
         ]);
     }
     

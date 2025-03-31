@@ -29,7 +29,7 @@ class TwigConfig {
                 ]
             ]);
         } catch (\Exception $e) {
-            error_log('Erreur lors de l\'initialisation de Twig: ' . $e->getMessage());
+            error_log('Twig initialization error: ' . $e->getMessage());
             throw $e;
         }
     }

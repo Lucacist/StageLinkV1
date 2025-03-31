@@ -1,44 +1,44 @@
 <?php
 require_once ROOT_PATH . '/src/Controllers/Controller.php';
-require_once ROOT_PATH . '/src/Models/OffreModel.php';
-require_once ROOT_PATH . '/src/Models/CandidatureModel.php';
+require_once ROOT_PATH . '/src/Models/OfferModel.php';
+require_once ROOT_PATH . '/src/Models/ApplicationModel.php';
 
-class CandidatureController extends Controller {
-    private $candidatureModel;
-    private $offreModel;
+class ApplicationController extends Controller {
+    private $applicationModel;
+    private $offerModel;
     
     public function __construct() {
         parent::__construct();
         require_once ROOT_PATH . '/src/Models/Database.php';
-        $this->candidatureModel = new CandidatureModel();
-        $this->offreModel = new OffreModel();
+        $this->applicationModel = new ApplicationModel();
+        $this->offerModel = new OfferModel();
     }
     
     public function index() {
-        $this->checkPageAccess('VOIR_CANDIDATURES');
+        $this->checkPageAccess('VIEW_APPLICATIONS');
         
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
         
-        $isAdmin = $this->hasPermission('GERER_CANDIDATURES');
+        $isAdmin = $this->hasPermission('MANAGE_APPLICATIONS');
         
         if ($isAdmin) {
-            $sql = "SELECT c.id, c.utilisateur_id, c.offre_id, c.lettre_motivation, c.cv, c.date_candidature, o.titre as offre_titre, e.nom as entreprise_nom, u.nom as etudiant_nom, u.prenom as etudiant_prenom
-                    FROM Candidatures c
-                    JOIN Offres o ON c.offre_id = o.id
-                    JOIN Entreprises e ON o.entreprise_id = e.id
-                    JOIN Utilisateurs u ON c.utilisateur_id = u.id
-                    ORDER BY c.date_candidature DESC";
+            $sql = "SELECT c.id, c.user_id, c.offer_id, c.cover_letter, c.resume, c.date_application, o.title as offer_title, e.name as company_name, u.name as student_name, u.firstname as student_firstname
+                    FROM Applications c
+                    JOIN Offers o ON c.offer_id = o.id
+                    JOIN Companies e ON o.company_id = e.id
+                    JOIN User u ON c.user_id = u.id
+                    ORDER BY c.date_application DESC";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
         } else {
-            $sql = "SELECT c.id, c.utilisateur_id, c.offre_id, c.lettre_motivation, c.cv, c.date_candidature, o.titre as offre_titre, e.nom as entreprise_nom
-                    FROM Candidatures c
-                    JOIN Offres o ON c.offre_id = o.id
-                    JOIN Entreprises e ON o.entreprise_id = e.id
-                    WHERE c.utilisateur_id = ?
-                    ORDER BY c.date_candidature DESC";
+            $sql = "SELECT c.id, c.user_id, c.offer_id, c.cover_letter, c.resume, c.date_application, o.title as offer_title, e.name as company_name
+                    FROM Applications c
+                    JOIN Offers o ON c.offer_id = o.id
+                    JOIN Companies e ON o.company_id = e.id
+                    WHERE c.user_id = ?
+                    ORDER BY c.date_application DESC";
             $stmt = $this->db->prepare($sql);
             $stmt->bind_param("i", $_SESSION['user_id']);
             $stmt->execute();
@@ -46,19 +46,19 @@ class CandidatureController extends Controller {
         
         $result = $stmt->get_result();
         
-        $candidatures = [];
+        $applications = [];
         while ($row = $result->fetch_assoc()) {
-            $candidatures[] = $row;
+            $applications[] = $row;
         }
         
-        echo $this->render('traiter_candidature', [
-            'pageTitle' => 'Candidatures - StageLink',
-            'candidatures' => $candidatures,
+        echo $this->render('process_application', [
+            'pageTitle' => 'Application - StageLink',
+            'applications' => $applications,
             'isAdmin' => $isAdmin
         ]);
     }
     
-    public function postuler() {
+    public function apply() {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -68,41 +68,41 @@ class CandidatureController extends Controller {
         }
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $offreId = isset($_POST['offre_id']) ? (int)$_POST['offre_id'] : 0;
-            $lettre = $_POST['lettre_motivation'] ?? '';
+            $offerId = isset($_POST['offer_id']) ? (int)$_POST['offer_id'] : 0;
+            $letter = $_POST['cover_letter'] ?? '';
             
-            $cvPath = '';
-            if (isset($_FILES['cv']) && $_FILES['cv']['error'] === UPLOAD_ERR_OK) {
-                $tmpName = $_FILES['cv']['tmp_name'];
-                $fileName = basename($_FILES['cv']['name']);
-                $uploadDir = ROOT_PATH . '/public/uploads/cv/';
+            $resumePath = '';
+            if (isset($_FILES['resume']) && $_FILES['resume']['error'] === UPLOAD_ERR_OK) {
+                $tmpName = $_FILES['resume']['tmp_name'];
+                $fileName = basename($_FILES['resume']['name']);
+                $uploadDir = ROOT_PATH . '/public/uploads/resume/';
                 
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0777, true);
                 }
                 
-                $cvPath = 'cv_' . $_SESSION['user_id'] . '_' . time() . '_' . $fileName;
+                $resumePath = 'resume_' . $_SESSION['user_id'] . '_' . time() . '_' . $fileName;
                 
                 move_uploaded_file($tmpName, $uploadDir . $cvPath);
             }
             
-            if ($offreId > 0 && !empty($cvPath)) {
-                $sql = "INSERT INTO Candidatures (utilisateur_id, offre_id, date_candidature, cv, lettre_motivation) 
+            if ($offerId > 0 && !empty($resumePath)) {
+                $sql = "INSERT INTO Applications (user_id, offer_id, date_application, resume, cover_letter) 
                         VALUES (?, ?, NOW(), ?, ?)";
                 $stmt = $this->db->prepare($sql);
-                $stmt->bind_param("iiss", $_SESSION['user_id'], $offreId, $cvPath, $lettre);
+                $stmt->bind_param("iiss", $_SESSION['user_id'], $offerId, $resumePath, $letter);
                 $stmt->execute();
                 
-                $this->redirect('offre_details&id=' . $offreId . '&message=candidature_success');
+                $this->redirect('offer_details&id=' . $offreId . '&message=application_success');
             } else {
-                $this->redirect('offre_details&id=' . $offreId . '&message=candidature_error');
+                $this->redirect('offer_details&id=' . $offreId . '&message=application_error');
             }
         } else {
-            $this->redirect('offres');
+            $this->redirect('offers');
         }
     }
     
-    public function mesCandidatures() {
+    public function myApplications() {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -112,8 +112,8 @@ class CandidatureController extends Controller {
             return;
         }
         
-        if (!isset($_SESSION['user_role']) || !in_array($_SESSION['user_role'], ['ADMIN', 'ETUDIANT'])) {
-            $this->redirect('accueil');
+        if (!isset($_SESSION['user_role']) || !in_array($_SESSION['user_role'], ['ADMIN', 'STUDENT'])) {
+            $this->redirect('homepage');
             return;
         }
         
