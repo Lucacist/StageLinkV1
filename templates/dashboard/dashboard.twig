@@ -29,23 +29,23 @@
             <form action="index.php?route=traiter_entreprise" method="POST" class="form-entreprise">
                 <input type="hidden" name="action" value="create">
                 <div class="form-group">
-                    <label for="nom">Nom de l'entreprise</label>
-                    <input type="text" id="nom" name="nom" required>
+                    <label for="entreprise_nom">Nom de l'entreprise</label>
+                    <input type="text" id="entreprise_nom" name="nom" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="description">Description de l'entreprise</label>
-                    <textarea id="description" name="description" rows="4" required></textarea>
+                    <label for="entreprise_description">Description de l'entreprise</label>
+                    <textarea id="entreprise_description" name="description" rows="4" required></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="email">Email de contact</label>
-                    <input type="email" id="email" name="email" required>
+                    <label for="entreprise_email">Email de contact</label>
+                    <input type="email" id="entreprise_email" name="email" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="telephone">Téléphone de contact</label>
-                    <input type="tel" id="telephone" name="telephone" pattern="[0-9]{10}" required>
+                    <label for="entreprise_telephone">Téléphone de contact</label>
+                    <input type="tel" id="entreprise_telephone" name="telephone" pattern="[0-9]{10}" required>
                     <small>Format : 0123456789</small>
                 </div>
 
@@ -63,8 +63,8 @@
                 <input type="hidden" name="action" value="create">
                 
                 <div class="form-group">
-                    <label for="entreprise_id">Entreprise</label>
-                    <select id="entreprise_id" name="entreprise_id" required>
+                    <label for="offre_entreprise_id">Entreprise</label>
+                    <select id="offre_entreprise_id" name="entreprise_id" required>
                         <option value="">Sélectionnez une entreprise</option>
                         {% for entreprise in entreprises %}
                         <option value="{{ entreprise.id }}">{{ entreprise.nom }}</option>
@@ -73,28 +73,28 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="titre">Titre de l'offre</label>
-                    <input type="text" id="titre" name="titre" required>
+                    <label for="offre_titre">Titre de l'offre</label>
+                    <input type="text" id="offre_titre" name="titre" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea id="description" name="description" rows="4" required></textarea>
+                    <label for="offre_description">Description</label>
+                    <textarea id="offre_description" name="description" rows="4" required></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label for="base_remuneration">Rémunération (€)</label>
-                    <input type="number" id="base_remuneration" name="base_remuneration" step="0.01" required>
+                    <label for="offre_base_remuneration">Rémunération (€)</label>
+                    <input type="number" id="offre_base_remuneration" name="base_remuneration" step="0.01" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="date_debut">Date de début</label>
-                    <input type="date" id="date_debut" name="date_debut">
+                    <label for="offre_date_debut">Date de début</label>
+                    <input type="date" id="offre_date_debut" name="date_debut">
                 </div>
                 
                 <div class="form-group">
-                    <label for="date_fin">Date de fin</label>
-                    <input type="date" id="date_fin" name="date_fin">
+                    <label for="offre_date_fin">Date de fin</label>
+                    <input type="date" id="offre_date_fin" name="date_fin">
                 </div>
                 
                 <div class="form-group">
@@ -108,10 +108,10 @@
                             {% for competence in competences %}
                             <div class="checkbox-item">
                                 <input type="checkbox" 
-                                       id="comp_{{ competence.id }}" 
+                                       id="offre_comp_{{ competence.id }}" 
                                        name="competences[]" 
                                        value="{{ competence.id }}">
-                                <label for="comp_{{ competence.id }}">{{ competence.nom }}</label>
+                                <label for="offre_comp_{{ competence.id }}">{{ competence.nom }}</label>
                             </div>
                             {% endfor %}
                         {% endif %}
@@ -134,28 +134,28 @@
                 <input type="hidden" name="action" value="create">
                 
                 <div class="form-group">
-                    <label for="nom">Nom*</label>
-                    <input type="text" id="nom" name="nom" required>
+                    <label for="utilisateur_nom">Nom*</label>
+                    <input type="text" id="utilisateur_nom" name="nom" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="prenom">Prénom*</label>
-                    <input type="text" id="prenom" name="prenom" required>
+                    <label for="utilisateur_prenom">Prénom*</label>
+                    <input type="text" id="utilisateur_prenom" name="prenom" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="email">Email*</label>
-                    <input type="email" id="email" name="email" required>
+                    <label for="utilisateur_email">Email*</label>
+                    <input type="email" id="utilisateur_email" name="email" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="mot_de_passe">Mot de passe*</label>
-                    <input type="password" id="mot_de_passe" name="mot_de_passe" required>
+                    <label for="utilisateur_mot_de_passe">Mot de passe*</label>
+                    <input type="password" id="utilisateur_mot_de_passe" name="mot_de_passe" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="role">Rôle*</label>
-                    <select id="role" name="role" required>
+                    <label for="utilisateur_role">Rôle*</label>
+                    <select id="utilisateur_role" name="role" required>
                         <option value="">Sélectionnez un rôle</option>
                         {% if session.user_role == 'ADMIN' %}
                             <option value="PILOTE">Pilote</option>

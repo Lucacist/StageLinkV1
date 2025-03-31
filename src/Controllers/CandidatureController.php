@@ -1,17 +1,17 @@
 <?php
-require_once ROOT_PATH . '/src/Controllers/Controller.php';
-require_once ROOT_PATH . '/src/Models/OffreModel.php';
-require_once ROOT_PATH . '/src/Models/CandidatureModel.php';
+require_once ROOT_PATH . '/src/controllers/controller.php';
+require_once ROOT_PATH . '/src/models/offremodel.php';
+require_once ROOT_PATH . '/src/models/candidaturemodel.php';
 
-class CandidatureController extends Controller {
-    private $candidatureModel;
-    private $offreModel;
+class candidaturecontroller extends controller {
+    private $candidaturemodel;
+    private $offremodel;
     
     public function __construct() {
         parent::__construct();
-        require_once ROOT_PATH . '/src/Models/Database.php';
-        $this->candidatureModel = new CandidatureModel();
-        $this->offreModel = new OffreModel();
+        require_once ROOT_PATH . '/src/models/database.php';
+        $this->candidaturemodel = new candidaturemodel();
+        $this->offremodel = new offremodel();
     }
     
     public function index() {
@@ -117,7 +117,7 @@ class CandidatureController extends Controller {
             return;
         }
         
-        $candidatures = $this->candidatureModel->getCandidaturesByUtilisateur($_SESSION['user_id']);
+        $candidatures = $this->candidaturemodel->getCandidaturesByUtilisateur($_SESSION['user_id']);
         
         echo $this->render('offre/mes_candidatures', [
             'pageTitle' => 'Mes Candidatures - StageLink',
@@ -133,8 +133,8 @@ class CandidatureController extends Controller {
         $candidature_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
         
         if ($candidature_id) {
-            $candidature = $this->candidatureModel->getCandidatureById($candidature_id);
-            $offre = $this->offreModel->getOffreById($candidature['offre_id']);
+            $candidature = $this->candidaturemodel->getCandidatureById($candidature_id);
+            $offre = $this->offremodel->getOffreById($candidature['offre_id']);
             
             echo $this->render('offre/confirmation_candidature', [
                 'pageTitle' => 'Candidature Confirmée - StageLink',
@@ -228,12 +228,12 @@ class CandidatureController extends Controller {
             $errors[] = "Le CV est requis.";
         }
         
-        if ($this->candidatureModel->candidatureExiste($utilisateur_id, $offre_id)) {
+        if ($this->candidaturemodel->candidatureExiste($utilisateur_id, $offre_id)) {
             $errors[] = "Vous avez déjà candidaté pour cette offre.";
         }
         
         if (empty($errors)) {
-            $result = $this->candidatureModel->creerCandidature($utilisateur_id, $offre_id, $lettre_motivation, $cv_path);
+            $result = $this->candidaturemodel->creerCandidature($utilisateur_id, $offre_id, $lettre_motivation, $cv_path);
             
             if ($result['success']) {
                 $_SESSION['flash'] = [
@@ -264,3 +264,11 @@ class CandidatureController extends Controller {
     }
 }
 ?>
+
+
+
+
+
+
+
+

@@ -1,16 +1,16 @@
 <?php
-class OffreModel {
+class offremodel {
     private $db;
     
     public function __construct() {
-        require_once ROOT_PATH . '/src/Models/Database.php';
-        $this->db = Database::getInstance();
+        require_once ROOT_PATH . '/src/models/database.php';
+        $this->db = database::getInstance();
     }
     
     public function getAllOffres() {
         $sql = "SELECT o.*, e.nom as entreprise_nom 
-                FROM Offres o
-                JOIN Entreprises e ON o.entreprise_id = e.id
+                FROM offres o
+                JOIN entreprises e ON o.entreprise_id = e.id
                 ORDER BY o.date_debut DESC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
@@ -30,9 +30,9 @@ class OffreModel {
                 e.email AS entreprise_email,
                 e.telephone AS entreprise_telephone,
                 COUNT(c.id) as nombre_candidatures
-                FROM Offres o
-                JOIN Entreprises e ON o.entreprise_id = e.id
-                LEFT JOIN Candidatures c ON o.id = c.offre_id
+                FROM offres o
+                JOIN entreprises e ON o.entreprise_id = e.id
+                LEFT JOIN candidatures c ON o.id = c.offre_id
                 WHERE o.id = ?
                 GROUP BY o.id";
         
@@ -49,7 +49,7 @@ class OffreModel {
     }
     
     public function createOffre($entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin, $competences = []) {
-        $sql = "INSERT INTO Offres (entreprise_id, titre, description, base_remuneration, date_debut, date_fin) 
+        $sql = "INSERT INTO offres (entreprise_id, titre, description, base_remuneration, date_debut, date_fin) 
                 VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
         
@@ -72,7 +72,7 @@ class OffreModel {
     }
     
     public function addOffreCompetence($offreId, $competenceId) {
-        $sql = "INSERT INTO Offres_Competences (offre_id, competence_id) VALUES (?, ?)";
+        $sql = "INSERT INTO offres_competences (offre_id, competence_id) VALUES (?, ?)";
         $stmt = $this->db->prepare($sql);
         
         try {
@@ -94,7 +94,7 @@ class OffreModel {
         
         $this->deleteOffreCompetences($offreId);
         
-        $sql = "INSERT INTO Offres_Competences (offre_id, competence_id) VALUES (?, ?)";
+        $sql = "INSERT INTO offres_competences (offre_id, competence_id) VALUES (?, ?)";
         $stmt = $this->db->prepare($sql);
         
         if (!$stmt) {
@@ -117,17 +117,45 @@ class OffreModel {
     }
     
     public function deleteOffreCompetences($offreId) {
-        $sql = "DELETE FROM Offres_Competences WHERE offre_id = ?";
+        $sql = "DELETE FROM offres_competences WHERE offre_id = ?";
         $stmt = $this->db->prepare($sql);
         
         return $stmt->execute([$offreId]);
     }
     
-    public function updateOffre($id, $entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin) {
-        $sql = "UPDATE Offres SET entreprise_id = ?, titre = ?, description = ?, base_remuneration = ?, date_debut = ?, date_fin = ? WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
+    public function updateOffre($id, $entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin, $competences = []) {
+        $this->db->getConnection()->beginTransaction();
         
-        return $stmt->execute([$entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin, $id]);
+        try {
+            $sql = "UPDATE offres SET entreprise_id = ?, titre = ?, description = ?, base_remuneration = ?, date_debut = ?, date_fin = ? WHERE id = ?";
+            $stmt = $this->db->prepare($sql);
+            
+            $result = $stmt->execute([$entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin, $id]);
+            
+            if (!$result) {
+                error_log("Erreur lors de la mise à jour de l'offre ID: $id - " . print_r($this->db->getConnection()->errorInfo(), true));
+                $this->db->getConnection()->rollBack();
+                return false;
+            }
+            
+            // Mettre à jour les compétences si fournies
+            if (!empty($competences)) {
+                // Supprimer les compétences existantes
+                $this->deleteOffreCompetences($id);
+                
+                // Ajouter les nouvelles compétences
+                foreach ($competences as $competenceId) {
+                    $this->addOffreCompetence($id, $competenceId);
+                }
+            }
+            
+            $this->db->getConnection()->commit();
+            return true;
+        } catch (PDOException $e) {
+            error_log("Exception lors de la mise à jour de l'offre ID: $id - " . $e->getMessage());
+            $this->db->getConnection()->rollBack();
+            return false;
+        }
     }
     
     public function deleteOffre($id) {
@@ -135,7 +163,7 @@ class OffreModel {
         
         try {
             // Vérifier si l'offre existe
-            $checkSql = "SELECT id FROM Offres WHERE id = :id";
+            $checkSql = "SELECT id FROM offres WHERE id = :id";
             $checkStmt = $this->db->prepare($checkSql);
             $checkStmt->bindParam(':id', $id, PDO::PARAM_INT);
             $checkStmt->execute();
@@ -146,28 +174,28 @@ class OffreModel {
             }
             
             // 1. Supprimer les entrées dans la table Wishlist liées à cette offre
-            $sqlWishlist = "DELETE FROM Wishlist WHERE offre_id = :id";
+            $sqlWishlist = "DELETE FROM wishlist WHERE offre_id = :id";
             $stmtWishlist = $this->db->prepare($sqlWishlist);
             $stmtWishlist->bindParam(':id', $id, PDO::PARAM_INT);
             $stmtWishlist->execute();
             error_log("Entrées Wishlist supprimées pour l'offre ID: $id");
             
             // 2. Supprimer les compétences liées à cette offre
-            $sqlCompetencesOffres = "DELETE FROM Offres_Competences WHERE offre_id = :id";
+            $sqlCompetencesOffres = "DELETE FROM offres_competences WHERE offre_id = :id";
             $stmtCompetencesOffres = $this->db->prepare($sqlCompetencesOffres);
             $stmtCompetencesOffres->bindParam(':id', $id, PDO::PARAM_INT);
             $stmtCompetencesOffres->execute();
             error_log("Compétences supprimées pour l'offre ID: $id");
             
             // 3. Supprimer les candidatures liées à cette offre
-            $sqlCandidatures = "DELETE FROM Candidatures WHERE offre_id = :id";
+            $sqlCandidatures = "DELETE FROM candidatures WHERE offre_id = :id";
             $stmtCandidatures = $this->db->prepare($sqlCandidatures);
             $stmtCandidatures->bindParam(':id', $id, PDO::PARAM_INT);
             $stmtCandidatures->execute();
             error_log("Candidatures supprimées pour l'offre ID: $id");
             
             // 4. Finalement, supprimer l'offre elle-même
-            $sqlOffre = "DELETE FROM Offres WHERE id = :id";
+            $sqlOffre = "DELETE FROM offres WHERE id = :id";
             $stmtOffre = $this->db->prepare($sqlOffre);
             $stmtOffre->bindParam(':id', $id, PDO::PARAM_INT);
             $result = $stmtOffre->execute();
@@ -190,8 +218,8 @@ class OffreModel {
     
     public function getOffreCompetences($offreId) {
         $sql = "SELECT c.* 
-                FROM Competences c
-                JOIN Offres_Competences oc ON c.id = oc.competence_id
+                FROM competences c
+                JOIN offres_competences oc ON c.id = oc.competence_id
                 WHERE oc.offre_id = ?
                 ORDER BY c.nom";
         $stmt = $this->db->prepare($sql);
@@ -206,7 +234,7 @@ class OffreModel {
     
     public function isOffreLiked($offreId, $utilisateurId) {
         $sql = "SELECT COUNT(*) as count 
-                FROM WishList 
+                FROM wishlist 
                 WHERE offre_id = ? AND utilisateur_id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$offreId, $utilisateurId]);
@@ -217,18 +245,18 @@ class OffreModel {
     
     public function toggleLike($offreId, $utilisateurId) {
         if ($this->isOffreLiked($offreId, $utilisateurId)) {
-            $sql = "DELETE FROM WishList WHERE offre_id = ? AND utilisateur_id = ?";
+            $sql = "DELETE FROM wishlist WHERE offre_id = ? AND utilisateur_id = ?";
             $stmt = $this->db->prepare($sql);
             return $stmt->execute([$offreId, $utilisateurId]);
         } else {
-            $sql = "INSERT INTO WishList (offre_id, utilisateur_id) VALUES (?, ?)";
+            $sql = "INSERT INTO wishlist (offre_id, utilisateur_id) VALUES (?, ?)";
             $stmt = $this->db->prepare($sql);
             return $stmt->execute([$offreId, $utilisateurId]);
         }
     }
 
     public function getAllCompetences() {
-        $sql = "SELECT * FROM Competences ORDER BY nom ASC";
+        $sql = "SELECT * FROM competences ORDER BY nom ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         
@@ -236,7 +264,7 @@ class OffreModel {
     }
     
     public function countAllOffres() {
-        $sql = "SELECT COUNT(*) as total FROM Offres";
+        $sql = "SELECT COUNT(*) as total FROM offres";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         $row = $stmt->fetch();
@@ -245,7 +273,7 @@ class OffreModel {
     
     public function countOffresBySearch($searchTerm) {
         $searchTerm = '%' . $searchTerm . '%';
-        $sql = "SELECT COUNT(*) as total FROM Offres WHERE titre LIKE :searchTerm";
+        $sql = "SELECT COUNT(*) as total FROM offres WHERE titre LIKE :searchTerm";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':searchTerm', $searchTerm, PDO::PARAM_STR);
         $stmt->execute();
@@ -256,8 +284,8 @@ class OffreModel {
     public function searchOffres($searchTerm, $limit, $offset, $userId = null) {
         $searchTerm = '%' . $searchTerm . '%';
         $sql = "SELECT o.*, e.nom as entreprise_nom 
-                FROM Offres o
-                JOIN Entreprises e ON o.entreprise_id = e.id
+                FROM offres o
+                JOIN entreprises e ON o.entreprise_id = e.id
                 WHERE o.titre LIKE :searchTerm
                 ORDER BY o.date_debut DESC
                 LIMIT :offset, :limit";
@@ -282,8 +310,8 @@ class OffreModel {
     
     public function getOffresWithPagination($limit, $offset) {
         $sql = "SELECT o.*, e.nom as entreprise_nom 
-                FROM Offres o
-                JOIN Entreprises e ON o.entreprise_id = e.id
+                FROM offres o
+                JOIN entreprises e ON o.entreprise_id = e.id
                 ORDER BY o.date_debut DESC
                 LIMIT :offset, :limit";
         
@@ -303,3 +331,6 @@ class OffreModel {
     
 }
 ?>
+
+
+

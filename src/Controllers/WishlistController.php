@@ -1,15 +1,15 @@
 <?php
-require_once ROOT_PATH . '/src/Controllers/Controller.php';
-require_once ROOT_PATH . '/src/Models/OffreModel.php';
+require_once ROOT_PATH . '/src/controllers/controller.php';
+require_once ROOT_PATH . '/src/models/offremodel.php';
 
-class WishlistController extends Controller {
-    private $offreModel;
+class wishlistcontroller extends controller {
+    private $offremodel;
     private $db;
     
     public function __construct() {
         parent::__construct(); // Appel au constructeur parent pour initialiser Twig
-        $this->offreModel = new OffreModel();
-        $this->db = Database::getInstance()->getConnection();
+        $this->offremodel = new offremodel();
+        $this->db = database::getInstance()->getConnection();
     }   
     
     public function toggleLike() {
@@ -33,7 +33,7 @@ class WishlistController extends Controller {
         $offre_id = (int)$_POST['offre_id'];
         
         try {
-            $db = Database::getInstance()->getConnection();
+            $db = database::getInstance()->getConnection();
             $db->begin_transaction();
             
             $stmt = $db->prepare("SELECT 1 FROM WishList WHERE utilisateur_id = ? AND offre_id = ?");
@@ -105,3 +105,9 @@ class WishlistController extends Controller {
     }
 }
 ?>
+
+
+
+
+
+

@@ -1,13 +1,13 @@
 <?php
-require_once ROOT_PATH . '/src/Controllers/Controller.php';
-require_once ROOT_PATH . '/src/Models/UtilisateurModel.php';
+require_once ROOT_PATH . '/src/controllers/controller.php';
+require_once ROOT_PATH . '/src/models/utilisateurmodel.php';
 
-class AuthController extends Controller {
-    private $utilisateurModel;
+class authcontroller extends controller {
+    private $utilisateurmodel;
     
     public function __construct() {
         parent::__construct();
-        $this->utilisateurModel = new UtilisateurModel();
+        $this->utilisateurmodel = new utilisateurmodel();
     }
     
     public function login() {
@@ -24,17 +24,17 @@ class AuthController extends Controller {
             $email = $_POST['email'] ?? '';
             $password = $_POST['mot_de_passe'] ?? '';
             
-            $user = $this->utilisateurModel->authenticate($email, $password);
+            $user = $this->utilisateurmodel->authenticate($email, $password);
             
             if ($user) {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_nom'] = $user['nom'];
                 $_SESSION['user_prenom'] = $user['prenom'];
                 
-                $role = $this->utilisateurModel->getUserRole($user['id']);
+                $role = $this->utilisateurmodel->getUserRole($user['id']);
                 $_SESSION['user_role'] = $role['role_code'];
                 
-                $_SESSION['permissions'] = $this->utilisateurModel->getUserPermissions($user['id']);
+                $_SESSION['permissions'] = $this->utilisateurmodel->getUserPermissions($user['id']);
                 
                 $this->redirect('accueil');
             } else {
@@ -68,3 +68,9 @@ class AuthController extends Controller {
         $this->redirect('login');
     }
 }
+
+
+
+
+
+

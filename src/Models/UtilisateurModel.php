@@ -1,14 +1,14 @@
 <?php
-class UtilisateurModel {
+class utilisateurmodel {
     private $db;
     
     public function __construct() {
-        require_once ROOT_PATH . '/src/Models/Database.php';
-        $this->db = Database::getInstance();
+        require_once ROOT_PATH . '/src/models/database.php';
+        $this->db = database::getInstance();
     }
     
     public function getUserById($userId) {
-        $sql = "SELECT * FROM Utilisateurs WHERE id = ?";
+        $sql = "SELECT * FROM utilisateurs WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$userId]);
         
@@ -16,7 +16,7 @@ class UtilisateurModel {
     }
     
     public function authenticate($email, $password) {
-        $sql = "SELECT * FROM Utilisateurs WHERE email = ?";
+        $sql = "SELECT * FROM utilisateurs WHERE email = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$email]);
         
@@ -38,15 +38,15 @@ class UtilisateurModel {
     public function updatePasswordHash($userId, $password) {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         
-        $sql = "UPDATE Utilisateurs SET mot_de_passe = ? WHERE id = ?";
+        $sql = "UPDATE utilisateurs SET mot_de_passe = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([$hashedPassword, $userId]);
     }
     
     public function getUserRole($userId) {
         $sql = "SELECT r.code as role_code, r.nom as role_nom
-                FROM Utilisateurs u
-                JOIN Roles r ON u.role_id = r.id
+                FROM utilisateurs u
+                JOIN roles r ON u.role_id = r.id
                 WHERE u.id = ?";
                 
         $stmt = $this->db->prepare($sql);
@@ -57,10 +57,10 @@ class UtilisateurModel {
     
     public function getUserPermissions($userId) {
         $sql = "SELECT DISTINCT p.code
-                FROM Utilisateurs u
-                JOIN Roles r ON u.role_id = r.id
-                JOIN Role_Permissions rp ON r.id = rp.role_id
-                JOIN Permissions p ON rp.permission_id = p.id
+                FROM utilisateurs u
+                JOIN roles r ON u.role_id = r.id
+                JOIN role_permissions rp ON r.id = rp.role_id
+                JOIN permissions p ON rp.permission_id = p.id
                 WHERE u.id = ?";
                 
         $stmt = $this->db->prepare($sql);
@@ -76,10 +76,10 @@ class UtilisateurModel {
     
     public function hasPermission($userId, $permissionCode) {
         $sql = "SELECT COUNT(*) as count 
-                FROM Utilisateurs u
-                JOIN Roles r ON u.role_id = r.id
-                JOIN Role_Permissions rp ON r.id = rp.role_id
-                JOIN Permissions p ON rp.permission_id = p.id
+                FROM utilisateurs u
+                JOIN roles r ON u.role_id = r.id
+                JOIN role_permissions rp ON r.id = rp.role_id
+                JOIN permissions p ON rp.permission_id = p.id
                 WHERE u.id = ? AND p.code = ?";
                 
         $stmt = $this->db->prepare($sql);
@@ -90,7 +90,7 @@ class UtilisateurModel {
     }
     
     public function createUser($nom, $prenom, $email, $mot_de_passe, $role_id) {
-        $sql = "SELECT COUNT(*) as count FROM Utilisateurs WHERE email = ?";
+        $sql = "SELECT COUNT(*) as count FROM utilisateurs WHERE email = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$email]);
         $row = $stmt->fetch();
@@ -101,7 +101,7 @@ class UtilisateurModel {
         
         $hashedPassword = password_hash($mot_de_passe, PASSWORD_DEFAULT);
         
-        $sql = "INSERT INTO Utilisateurs (nom, prenom, email, mot_de_passe, role_id) VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role_id) VALUES (?, ?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
         
         try {
@@ -114,7 +114,7 @@ class UtilisateurModel {
     }
     
     public function getAllRoles() {
-        $sql = "SELECT * FROM Roles";
+        $sql = "SELECT * FROM roles";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         
@@ -122,7 +122,7 @@ class UtilisateurModel {
     }
     
     public function getRoleIdByCode($roleCode) {
-        $sql = "SELECT id FROM Roles WHERE code = ?";
+        $sql = "SELECT id FROM roles WHERE code = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$roleCode]);
         
@@ -130,3 +130,7 @@ class UtilisateurModel {
         return $row ? $row['id'] : null;
     }
 }
+
+
+
+

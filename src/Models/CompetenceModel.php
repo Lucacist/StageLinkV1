@@ -1,14 +1,14 @@
 <?php
-class CompetenceModel {
+class competencemodel {
     private $db;
     
     public function __construct() {
-        require_once ROOT_PATH . '/src/Models/Database.php';
-        $this->db = Database::getInstance();
+        require_once ROOT_PATH . '/src/models/database.php';
+        $this->db = database::getInstance();
     }
     
     public function getAllCompetences() {
-        $sql = "SELECT * FROM Competences ORDER BY nom";
+        $sql = "SELECT * FROM competences ORDER BY nom";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         
@@ -16,7 +16,7 @@ class CompetenceModel {
     }
     
     public function getCompetenceById($id) {
-        $sql = "SELECT * FROM Competences WHERE id = ?";
+        $sql = "SELECT * FROM competences WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$id]);
         
@@ -24,7 +24,7 @@ class CompetenceModel {
     }
     
     public function createCompetence($nom) {
-        $sql = "SELECT COUNT(*) as count FROM Competences WHERE nom = ?";
+        $sql = "SELECT COUNT(*) as count FROM competences WHERE nom = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$nom]);
         $row = $stmt->fetch();
@@ -33,7 +33,7 @@ class CompetenceModel {
             return ['success' => false, 'message' => 'Cette compétence existe déjà.'];
         }
         
-        $sql = "INSERT INTO Competences (nom) VALUES (?)";
+        $sql = "INSERT INTO competences (nom) VALUES (?)";
         $stmt = $this->db->prepare($sql);
         
         try {
@@ -45,16 +45,19 @@ class CompetenceModel {
     }
     
     public function updateCompetence($id, $nom) {
-        $sql = "UPDATE Competences SET nom = ? WHERE id = ?";
+        $sql = "UPDATE competences SET nom = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         
         return $stmt->execute([$nom, $id]);
     }
     
     public function deleteCompetence($id) {
-        $sql = "DELETE FROM Competences WHERE id = ?";
+        $sql = "DELETE FROM competences WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         
         return $stmt->execute([$id]);
     }
 }
+
+
+

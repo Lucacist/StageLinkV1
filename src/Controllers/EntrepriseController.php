@@ -1,15 +1,15 @@
 <?php
-require_once ROOT_PATH . '/src/Controllers/Controller.php';
-require_once ROOT_PATH . '/src/Models/EntrepriseModel.php';
-require_once ROOT_PATH . '/src/Controllers/Pagination.php';
+require_once ROOT_PATH . '/src/controllers/controller.php';
+require_once ROOT_PATH . '/src/models/entreprisemodel.php';
+require_once ROOT_PATH . '/src/controllers/Pagination.php';
 
 
-class EntrepriseController extends Controller {
-    private $entrepriseModel;
+class entreprisecontroller extends controller {
+    private $entreprisemodel;
     
     public function __construct() {
         parent::__construct();
-        $this->entrepriseModel = new EntrepriseModel();
+        $this->entreprisemodel = new entreprisemodel();
     }
     
     public function index() {
@@ -20,12 +20,12 @@ class EntrepriseController extends Controller {
         
         if (!empty($searchTerm)) {
             // Recherche avec terme
-            $totalEntreprises = $this->entrepriseModel->countEntreprisesBySearch($searchTerm);
+            $totalEntreprises = $this->entreprisemodel->countEntreprisesBySearch($searchTerm);
             
             $pagination = new Pagination($totalEntreprises, 5, $page);
             
             $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
-            $entreprises = $this->entrepriseModel->searchEntreprises(
+            $entreprises = $this->entreprisemodel->searchEntreprises(
                 $searchTerm,
                 $pagination->getLimit(), 
                 $pagination->getOffset(),
@@ -33,12 +33,12 @@ class EntrepriseController extends Controller {
             );
         } else {
             // Sans recherche
-            $totalEntreprises = $this->entrepriseModel->countAllEntreprises();
+            $totalEntreprises = $this->entreprisemodel->countAllEntreprises();
             
             $pagination = new Pagination($totalEntreprises, 5, $page);
             
             $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
-            $entreprises = $this->entrepriseModel->getEntreprisesWithPaginationAndRatings(
+            $entreprises = $this->entreprisemodel->getEntreprisesWithPaginationAndRatings(
                 $pagination->getLimit(), 
                 $pagination->getOffset(),
                 $userId
@@ -69,17 +69,17 @@ class EntrepriseController extends Controller {
         }
         
         $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
-        $entreprise = $this->entrepriseModel->getEntrepriseWithRatingsById($id, $userId);
+        $entreprise = $this->entreprisemodel->getEntrepriseWithRatingsById($id, $userId);
         
         if (!$entreprise) {
             $this->redirect('entreprises');
         }
         
-        $evaluations = $this->entrepriseModel->getEvaluations($id);
+        $evaluations = $this->entreprisemodel->getEvaluations($id);
         
-        $offres = $this->entrepriseModel->getOffresEntreprise($id);
+        $offres = $this->entreprisemodel->getOffresEntreprise($id);
         
-        $totalCandidatures = $this->entrepriseModel->getTotalCandidaturesEntreprise($id);
+        $totalCandidatures = $this->entreprisemodel->getTotalCandidaturesEntreprise($id);
         
         echo $this->render('entreprise_details', [
             'pageTitle' => $entreprise['nom'] . ' - StageLink',
@@ -93,7 +93,7 @@ class EntrepriseController extends Controller {
     public function traiter() {
         $this->checkPageAccess('GERER_ENTREPRISES');
         
-        error_log("Méthode traiter() appelée dans EntrepriseController");
+        error_log("Méthode traiter() appelée dans entreprisecontroller");
         error_log("Méthode HTTP: " . $_SERVER['REQUEST_METHOD']);
         error_log("POST data: " . print_r($_POST, true));
         
@@ -138,7 +138,7 @@ class EntrepriseController extends Controller {
         
         if (empty($errors)) {
             if ($action === 'create') {
-                $success = $this->entrepriseModel->createEntreprise($nom, $description, $email, $telephone);
+                $success = $this->entreprisemodel->createEntreprise($nom, $description, $email, $telephone);
                 if ($success) {
                     $_SESSION['success_message'] = "L'entreprise a été créée avec succès.";
                     $this->redirect('dashboard');
@@ -148,7 +148,7 @@ class EntrepriseController extends Controller {
                 }
             } elseif ($action === 'update' && $id > 0) {
                 error_log("Tentative de mise à jour de l'entreprise ID: " . $id);
-                $success = $this->entrepriseModel->updateEntreprise($id, $nom, $description, $email, $telephone);
+                $success = $this->entreprisemodel->updateEntreprise($id, $nom, $description, $email, $telephone);
                 error_log("Résultat de la mise à jour: " . ($success ? "Succès" : "Échec"));
                 
                 if ($success) {
@@ -162,7 +162,7 @@ class EntrepriseController extends Controller {
                 error_log("Tentative de suppression de l'entreprise ID: " . $id);
                 
                 // Vérifier si l'entreprise existe avant de tenter de la supprimer
-                $entreprise = $this->entrepriseModel->getEntrepriseById($id);
+                $entreprise = $this->entreprisemodel->getEntrepriseById($id);
                 if (!$entreprise) {
                     error_log("Entreprise ID: " . $id . " n'existe pas");
                     $_SESSION['error_message'] = "L'entreprise n'existe pas.";
@@ -170,7 +170,7 @@ class EntrepriseController extends Controller {
                     return;
                 }
                 
-                $success = $this->entrepriseModel->deleteEntreprise($id);
+                $success = $this->entreprisemodel->deleteEntreprise($id);
                 error_log("Résultat de la suppression: " . ($success ? "Succès" : "Échec"));
                 
                 if ($success) {
@@ -213,7 +213,7 @@ class EntrepriseController extends Controller {
             exit;
         }
 
-        $result = $this->entrepriseModel->rateEntreprise($entrepriseId, $_SESSION['user_id'], $note);
+        $result = $this->entreprisemodel->rateEntreprise($entrepriseId, $_SESSION['user_id'], $note);
         
         if ($result) {
             $_SESSION['success_message'] = "Votre note a été enregistrée avec succès.";
@@ -225,3 +225,9 @@ class EntrepriseController extends Controller {
         exit;
     }
 }
+
+
+
+
+
+

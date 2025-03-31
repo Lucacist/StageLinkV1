@@ -1,7 +1,7 @@
 <?php
-require_once ROOT_PATH . '/src/Config/TwigConfig.php';
+require_once ROOT_PATH . '/src/config/TwigConfig.php';
 
-class Controller {
+class controller {
     protected $twig;
     
     public function __construct() {
@@ -41,7 +41,7 @@ class Controller {
     }
     
     protected function hasPermission($permissionCode) {
-        require_once ROOT_PATH . '/src/Models/UtilisateurModel.php';
+        require_once ROOT_PATH . '/src/models/utilisateurmodel.php';
         
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -51,7 +51,7 @@ class Controller {
             return false;
         }
         
-        $userModel = new UtilisateurModel();
+        $userModel = new utilisateurmodel();
         return $userModel->hasPermission($_SESSION['user_id'], $permissionCode);
     }
     
@@ -94,3 +94,8 @@ class Controller {
         exit();
     }
 }
+
+
+
+
+

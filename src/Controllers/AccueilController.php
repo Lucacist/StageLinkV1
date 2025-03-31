@@ -1,7 +1,7 @@
 <?php
-require_once ROOT_PATH . '/src/Controllers/Controller.php';
+require_once ROOT_PATH . '/src/controllers/controller.php';
 
-class AccueilController extends Controller {
+class accueilcontroller extends controller {
     public function __construct() {
         parent::__construct();
     }
@@ -12,3 +12,6 @@ class AccueilController extends Controller {
         ]);
     }
 }
+
+
+

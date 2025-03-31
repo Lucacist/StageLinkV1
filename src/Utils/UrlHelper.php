@@ -1,6 +1,6 @@
 <?php
 
-class UrlHelper {
+class urlhelper {
     /**
      * Génère une URL propre pour la route spécifiée
      * 
@@ -34,3 +34,4 @@ class UrlHelper {
         }
     }
 }
+

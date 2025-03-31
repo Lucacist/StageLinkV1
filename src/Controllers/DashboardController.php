@@ -1,19 +1,19 @@
 <?php
-require_once ROOT_PATH . '/src/Controllers/Controller.php';
-require_once ROOT_PATH . '/src/Models/UtilisateurModel.php';
-require_once ROOT_PATH . '/src/Models/OffreModel.php';
-require_once ROOT_PATH . '/src/Models/EntrepriseModel.php';
+require_once ROOT_PATH . '/src/controllers/controller.php';
+require_once ROOT_PATH . '/src/models/utilisateurmodel.php';
+require_once ROOT_PATH . '/src/models/offremodel.php';
+require_once ROOT_PATH . '/src/models/entreprisemodel.php';
 
-class DashboardController extends Controller {
-    private $utilisateurModel;
-    private $offreModel;
-    private $entrepriseModel;
+class dashboardcontroller extends controller {
+    private $utilisateurmodel;
+    private $offremodel;
+    private $entreprisemodel;
     
     public function __construct() {
         parent::__construct();
-        $this->utilisateurModel = new UtilisateurModel();
-        $this->offreModel = new OffreModel();
-        $this->entrepriseModel = new EntrepriseModel();
+        $this->utilisateurmodel = new utilisateurmodel();
+        $this->offremodel = new offremodel();
+        $this->entreprisemodel = new entreprisemodel();
     }
     
     public function index() {
@@ -29,8 +29,8 @@ class DashboardController extends Controller {
             $this->redirect('accueil');
         }
         
-        $userData = $this->utilisateurModel->getUserById($_SESSION['user_id']);
-        $userRole = $this->utilisateurModel->getUserRole($_SESSION['user_id']);
+        $userData = $this->utilisateurmodel->getUserById($_SESSION['user_id']);
+        $userRole = $this->utilisateurmodel->getUserRole($_SESSION['user_id']);
         
         $userPermissions = [
             'GERER_ENTREPRISES' => $this->hasPermission('GERER_ENTREPRISES'),
@@ -39,14 +39,14 @@ class DashboardController extends Controller {
             'CREER_OFFRE' => $this->hasPermission('CREER_OFFRE')
         ];
         
-        $entreprises = $this->entrepriseModel->getAllEntreprises();
+        $entreprises = $this->entreprisemodel->getAllEntreprises();
         
-        $competences = $this->offreModel->getAllCompetences();
+        $competences = $this->offremodel->getAllCompetences();
         
-        $totalOffres = count($this->offreModel->getAllOffres());
-        $totalEntreprises = count($this->entrepriseModel->getAllEntreprises());
+        $totalOffres = count($this->offremodel->getAllOffres());
+        $totalEntreprises = count($this->entreprisemodel->getAllEntreprises());
         
-        $roles = $this->utilisateurModel->getAllRoles();
+        $roles = $this->utilisateurmodel->getAllRoles();
         
         $error = isset($_GET['error']) ? $_GET['error'] : null;
         $success = isset($_GET['success']) ? $_GET['success'] : null;
@@ -75,7 +75,7 @@ class DashboardController extends Controller {
             $this->redirect('login');
         }
         
-        $userRole = $this->utilisateurModel->getUserRole($_SESSION['user_id']);
+        $userRole = $this->utilisateurmodel->getUserRole($_SESSION['user_id']);
         $isAdmin = ($userRole['role_code'] === 'ADMIN');
         $isPilote = ($userRole['role_code'] === 'PILOTE');
         
@@ -108,7 +108,7 @@ class DashboardController extends Controller {
                 return;
             }
             
-            $roleId = $this->utilisateurModel->getRoleIdByCode($role);
+            $roleId = $this->utilisateurmodel->getRoleIdByCode($role);
             error_log("ID du rôle '$role': " . ($roleId ? $roleId : 'non trouvé'));
             
             if (!$roleId) {
@@ -117,7 +117,7 @@ class DashboardController extends Controller {
                 return;
             }
             
-            $result = $this->utilisateurModel->createUser($nom, $prenom, $email, $mot_de_passe, $roleId);
+            $result = $this->utilisateurmodel->createUser($nom, $prenom, $email, $mot_de_passe, $roleId);
             error_log("Résultat de la création: " . json_encode($result));
             
             if ($result['success']) {
@@ -133,3 +133,11 @@ class DashboardController extends Controller {
     }
 }
 ?>
+
+
+
+
+
+
+
+

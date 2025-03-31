@@ -1,43 +1,43 @@
 <?php
-require_once ROOT_PATH . '/src/Controllers/Controller.php';
-require_once ROOT_PATH . '/src/Models/OffreModel.php';
-require_once ROOT_PATH . '/src/Models/EntrepriseModel.php';
+require_once ROOT_PATH . '/src/controllers/controller.php';
+require_once ROOT_PATH . '/src/models/offremodel.php';
+require_once ROOT_PATH . '/src/models/entreprisemodel.php';
 
-class OffreController extends Controller {
-    private $offreModel;
-    private $entrepriseModel;
+class offrecontroller extends controller {
+    private $offremodel;
+    private $entreprisemodel;
     
     public function __construct() {
         parent::__construct();
-        $this->offreModel = new OffreModel();
-        $this->entrepriseModel = new EntrepriseModel();
+        $this->offremodel = new offremodel();
+        $this->entreprisemodel = new entreprisemodel();
     }
     
     public function index() {
         $this->checkPageAccess('VOIR_OFFRE');
         
-        require_once ROOT_PATH . '/src/Controllers/Pagination.php';
+        require_once ROOT_PATH . '/src/controllers/Pagination.php';
         
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
         
         if (!empty($searchTerm)) {
-            $totalOffres = $this->offreModel->countOffresBySearch($searchTerm);
+            $totalOffres = $this->offremodel->countOffresBySearch($searchTerm);
             
             $pagination = new Pagination($totalOffres, 5, $page);
             
-            $offres = $this->offreModel->searchOffres(
+            $offres = $this->offremodel->searchOffres(
                 $searchTerm,
                 $pagination->getLimit(), 
                 $pagination->getOffset(),
                 isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null
             );
         } else {
-            $totalOffres = $this->offreModel->countAllOffres();
+            $totalOffres = $this->offremodel->countAllOffres();
             
             $pagination = new Pagination($totalOffres, 5, $page);
             
-            $offres = $this->offreModel->getOffresWithPagination(
+            $offres = $this->offremodel->getOffresWithPagination(
                 $pagination->getLimit(), 
                 $pagination->getOffset()
             );
@@ -45,7 +45,7 @@ class OffreController extends Controller {
         
         foreach ($offres as &$offre) {
             if (isset($_SESSION['user_id'])) {
-                $offre['isLiked'] = $this->offreModel->isOffreLiked($offre['id'], $_SESSION['user_id']);
+                $offre['isLiked'] = $this->offremodel->isOffreLiked($offre['id'], $_SESSION['user_id']);
             } else {
                 $offre['isLiked'] = false;
             }
@@ -73,13 +73,13 @@ class OffreController extends Controller {
             $this->redirect('offres');
         }
         
-        $offre = $this->offreModel->getOffreById($id);
+        $offre = $this->offremodel->getOffreById($id);
         
         if (!$offre) {
             $this->redirect('offres');
         }
         
-        $competences = $this->offreModel->getOffreCompetences($id);
+        $competences = $this->offremodel->getOffreCompetences($id);
         
         $isLiked = false;
         $hasApplied = false;
@@ -104,11 +104,11 @@ class OffreController extends Controller {
         }
         
         if (isset($_SESSION['user_id'])) {
-            $isLiked = $this->offreModel->isOffreLiked($id, $_SESSION['user_id']);
+            $isLiked = $this->offremodel->isOffreLiked($id, $_SESSION['user_id']);
             
-            require_once ROOT_PATH . '/src/Models/CandidatureModel.php';
-            $candidatureModel = new CandidatureModel();
-            $hasApplied = $candidatureModel->candidatureExiste($_SESSION['user_id'], $id);
+            require_once ROOT_PATH . '/src/models/candidaturemodel.php';
+            $candidaturemodel = new candidaturemodel();
+            $hasApplied = $candidaturemodel->candidatureExiste($_SESSION['user_id'], $id);
         }
         
         $flash = isset($_SESSION['flash']) ? $_SESSION['flash'] : null;
@@ -129,23 +129,29 @@ class OffreController extends Controller {
     public function create() {
         $this->checkPageAccess('CREER_OFFRE');
         
-        $entreprises = $this->entrepriseModel->getAllEntreprises();
+        $entreprises = $this->entreprisemodel->getAllEntreprises();
+        
+        // Charger les compétences pour le formulaire
+        require_once ROOT_PATH . '/src/models/competencemodel.php';
+        $competencemodel = new competencemodel();
+        $competences = $competencemodel->getAllCompetences();
         
         $mode = 'create';
         $offre = null;
         
         if (isset($_GET['id'])) {
             $id = (int)$_GET['id'];
-            $offre = $this->offreModel->getOffreById($id);
+            $offre = $this->offremodel->getOffreById($id);
             
             if ($offre) {
                 $mode = 'edit';
             }
         }
         
-        echo $this->render('creer-offre', [
+        echo $this->render('offre/creer-offre', [
             'pageTitle' => ($mode === 'create' ? 'Créer une offre' : 'Modifier une offre') . ' - StageLink',
             'entreprises' => $entreprises,
+            'competences' => $competences,
             'mode' => $mode,
             'offre' => $offre
         ]);
@@ -189,7 +195,44 @@ class OffreController extends Controller {
         error_log("Action: " . $action);
         error_log("ID: " . $id);
         
-        if ($action === 'update' && $id > 0) {
+        // Traiter la création d'une nouvelle offre
+        if ($action === 'create') {
+            error_log("Traitement de la création d'une nouvelle offre");
+            
+            $entrepriseId = isset($_POST['entreprise_id']) ? (int)$_POST['entreprise_id'] : 0;
+            $titre = $_POST['titre'] ?? '';
+            $description = $_POST['description'] ?? '';
+            $baseRemuneration = isset($_POST['base_remuneration']) ? (float)$_POST['base_remuneration'] : 0;
+            $dateDebut = !empty($_POST['date_debut']) ? $_POST['date_debut'] : date('Y-m-d');
+            $dateFin = !empty($_POST['date_fin']) ? $_POST['date_fin'] : date('Y-m-d', strtotime('+3 months'));
+            $competences = isset($_POST['competences']) ? $_POST['competences'] : [];
+            
+            error_log("Création d'offre - Données reçues: " . json_encode([
+                'action' => $action,
+                'entrepriseId' => $entrepriseId,
+                'titre' => $titre,
+                'description' => $description,
+                'baseRemuneration' => $baseRemuneration,
+                'dateDebut' => $dateDebut,
+                'dateFin' => $dateFin,
+                'competences' => $competences
+            ]));
+            
+            $offreId = $this->offremodel->createOffre($entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin, $competences);
+            
+            if ($offreId) {
+                error_log("Création réussie pour l'offre ID: " . $offreId);
+                $_SESSION['success_message'] = "L'offre a été créée avec succès.";
+                $this->redirect('offre_details', ['id' => $offreId]);
+                exit();
+            } else {
+                error_log("Échec de la création de l'offre");
+                $_SESSION['error_message'] = "Erreur lors de la création de l'offre.";
+                $this->redirect('creer_offre');
+                exit();
+            }
+        }
+        elseif ($action === 'update' && $id > 0) {
             error_log("Traitement de l'action update pour l'offre ID: " . $id);
             $entrepriseId = isset($_POST['entreprise_id']) ? (int)$_POST['entreprise_id'] : 0;
             $titre = $_POST['titre'] ?? '';
@@ -197,6 +240,7 @@ class OffreController extends Controller {
             $baseRemuneration = isset($_POST['base_remuneration']) ? (float)$_POST['base_remuneration'] : 0;
             $dateDebut = !empty($_POST['date_debut']) ? $_POST['date_debut'] : date('Y-m-d');
             $dateFin = !empty($_POST['date_fin']) ? $_POST['date_fin'] : date('Y-m-d', strtotime('+3 months'));
+            $competences = isset($_POST['competences']) ? $_POST['competences'] : [];
             
             error_log("Mise à jour d'offre - Données reçues: " . json_encode([
                 'entrepriseId' => $entrepriseId,
@@ -204,10 +248,11 @@ class OffreController extends Controller {
                 'description' => $description,
                 'baseRemuneration' => $baseRemuneration,
                 'dateDebut' => $dateDebut,
-                'dateFin' => $dateFin
+                'dateFin' => $dateFin,
+                'competences' => $competences
             ]));
             
-            $success = $this->offreModel->updateOffre($id, $entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin);
+            $success = $this->offremodel->updateOffre($id, $entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin, $competences);
             
             if ($success) {
                 error_log("Mise à jour réussie pour l'offre ID: " . $id);
@@ -217,32 +262,28 @@ class OffreController extends Controller {
                 $_SESSION['error_message'] = "Erreur lors de la mise à jour de l'offre.";
             }
             
-            // Utiliser l'ancien format d'URL pour la redirection
-            header('Location: index.php?route=offre_details&id=' . $id);
+            $this->redirect('offre_details', ['id' => $id]);
             exit();
             
         } elseif ($action === 'delete' && $id > 0) {
             error_log("Traitement de l'action delete pour l'offre ID: " . $id);
             
-            $success = $this->offreModel->deleteOffre($id);
+            $success = $this->offremodel->deleteOffre($id);
             
             if ($success) {
                 error_log("Suppression réussie pour l'offre ID: " . $id);
                 $_SESSION['success_message'] = "L'offre a été supprimée avec succès.";
-                // Utiliser l'ancien format d'URL pour la redirection
-                header('Location: index.php?route=offres');
+                $this->redirect('offres');
                 exit();
             } else {
                 error_log("Échec de la suppression pour l'offre ID: " . $id);
                 $_SESSION['error_message'] = "Erreur lors de la suppression de l'offre.";
-                // Utiliser l'ancien format d'URL pour la redirection
-                header('Location: index.php?route=offre_details&id=' . $id);
+                $this->redirect('offre_details', ['id' => $id]);
                 exit();
             }
         } else {
             error_log("Action non reconnue ou ID invalide, redirection vers dashboard");
-            // Utiliser l'ancien format d'URL pour la redirection
-            header('Location: index.php?route=dashboard');
+            $this->redirect('dashboard');
             exit();
         }
         
@@ -266,9 +307,9 @@ class OffreController extends Controller {
             return;
         }
         
-        $result = $this->offreModel->toggleLike($offreId, $_SESSION['user_id']);
+        $result = $this->offremodel->toggleLike($offreId, $_SESSION['user_id']);
         
-        $isLiked = $this->offreModel->isOffreLiked($offreId, $_SESSION['user_id']);
+        $isLiked = $this->offremodel->isOffreLiked($offreId, $_SESSION['user_id']);
         
         echo json_encode([
             'success' => $result,
@@ -277,3 +318,11 @@ class OffreController extends Controller {
         exit; 
     }
 }
+
+
+
+
+
+
+
+

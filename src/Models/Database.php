@@ -1,5 +1,5 @@
 <?php
-class Database {
+class database {
     private static $instance = null;
     private $conn;
     
@@ -20,7 +20,7 @@ class Database {
     
     public static function getInstance() {
         if (self::$instance == null) {
-            self::$instance = new Database();
+            self::$instance = new database();
         }
         return self::$instance;
     }
@@ -36,4 +36,9 @@ class Database {
     public function query($sql) {
         return $this->conn->query($sql);
     }
+    
+    public function getLastInsertId() {
+        return $this->conn->lastInsertId();
+    }
 }
+
