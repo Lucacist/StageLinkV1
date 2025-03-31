@@ -9,7 +9,8 @@ class EntrepriseModel {
 
     public function countAllEntreprises() {
         $sql = "SELECT COUNT(*) as total FROM Entreprises";
-        $stmt = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
         $row = $stmt->fetch();
         return $row['total'];
     }
@@ -24,14 +25,17 @@ class EntrepriseModel {
                 LEFT JOIN (
                     SELECT entreprise_id, note 
                     FROM Evaluations 
-                    WHERE utilisateur_id = ?
+                    WHERE utilisateur_id = :userId
                 ) user_eval ON e.id = user_eval.entreprise_id
                 GROUP BY e.id
                 ORDER BY e.nom
-                LIMIT ?, ?";
+                LIMIT :offset, :limit";
     
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$userId, $offset, $limit]);
+        $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
     
         return $stmt->fetchAll();
     }
@@ -39,7 +43,8 @@ class EntrepriseModel {
     
     public function getAllEntreprises() {
         $sql = "SELECT * FROM Entreprises ORDER BY nom";
-        $stmt = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
         
         return $stmt->fetchAll();
     }
@@ -54,21 +59,23 @@ class EntrepriseModel {
                 LEFT JOIN (
                     SELECT entreprise_id, note 
                     FROM Evaluations 
-                    WHERE utilisateur_id = ?
+                    WHERE utilisateur_id = :userId
                 ) user_eval ON e.id = user_eval.entreprise_id
                 GROUP BY e.id
                 ORDER BY e.nom";
         
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$userId]);
+        $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+        $stmt->execute();
         
         return $stmt->fetchAll();
     }
     
     public function getEntrepriseById($id) {
-        $sql = "SELECT * FROM Entreprises WHERE id = ?";
+        $sql = "SELECT * FROM Entreprises WHERE id = :id";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$id]);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
         
         return $stmt->fetch() ?: null;
     }
@@ -84,21 +91,24 @@ class EntrepriseModel {
                 LEFT JOIN (
                     SELECT entreprise_id, note 
                     FROM Evaluations 
-                    WHERE utilisateur_id = ?
+                    WHERE utilisateur_id = :userId
                 ) user_eval ON e.id = user_eval.entreprise_id
-                WHERE e.id = ?
+                WHERE e.id = :id
                 GROUP BY e.id";
         
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$userId, $id]);
+        $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
         
         return $stmt->fetch() ?: null;
     }
     
     public function createEntreprise($nom, $description, $email, $telephone) {
-        $sql = "SELECT COUNT(*) as count FROM Entreprises WHERE email = ?";
+        $sql = "SELECT COUNT(*) as count FROM Entreprises WHERE email = :email";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$email]);
+        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+        $stmt->execute();
         $row = $stmt->fetch();
         
         if ($row['count'] > 0) {
@@ -106,58 +116,74 @@ class EntrepriseModel {
         }
         
         $sql = "INSERT INTO Entreprises (nom, description, email, telephone) 
-                VALUES (?, ?, ?, ?)";
+                VALUES (:nom, :description, :email, :telephone)";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$nom, $description, $email, $telephone]);
+        $stmt->bindParam(':nom', $nom, PDO::PARAM_STR);
+        $stmt->bindParam(':description', $description, PDO::PARAM_STR);
+        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+        $stmt->bindParam(':telephone', $telephone, PDO::PARAM_STR);
+        return $stmt->execute();
     }
     
     public function updateEntreprise($id, $nom, $description, $email, $telephone) {
-        $checkSql = "SELECT id FROM Entreprises WHERE email = ? AND id != ?";
+        $checkSql = "SELECT id FROM Entreprises WHERE email = :email AND id != :id";
         $checkStmt = $this->db->prepare($checkSql);
-        $checkStmt->execute([$email, $id]);
+        $checkStmt->bindParam(':email', $email, PDO::PARAM_STR);
+        $checkStmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $checkStmt->execute();
         
         if ($checkStmt->rowCount() > 0) {
             return false;
         }
         
         $sql = "UPDATE Entreprises 
-                SET nom = ?, description = ?, email = ?, telephone = ? 
-                WHERE id = ?";
+                SET nom = :nom, description = :description, email = :email, telephone = :telephone 
+                WHERE id = :id";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$nom, $description, $email, $telephone, $id]);
+        $stmt->bindParam(':nom', $nom, PDO::PARAM_STR);
+        $stmt->bindParam(':description', $description, PDO::PARAM_STR);
+        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+        $stmt->bindParam(':telephone', $telephone, PDO::PARAM_STR);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
     
     public function deleteEntreprise($id) {
         $this->db->getConnection()->beginTransaction();
         
         try {
-            $checkSql = "SELECT id FROM Entreprises WHERE id = ?";
+            $checkSql = "SELECT id FROM Entreprises WHERE id = :id";
             $checkStmt = $this->db->prepare($checkSql);
-            $checkStmt->execute([$id]);
+            $checkStmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $checkStmt->execute();
             
             if ($checkStmt->rowCount() === 0) {
                 error_log("Tentative de suppression d'une entreprise inexistante (ID: $id)");
                 return false;
             }
             
-            $sqlEvaluations = "DELETE FROM Evaluations WHERE entreprise_id = ?";
+            $sqlEvaluations = "DELETE FROM Evaluations WHERE entreprise_id = :id";
             $stmtEvaluations = $this->db->prepare($sqlEvaluations);
-            $stmtEvaluations->execute([$id]);
+            $stmtEvaluations->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmtEvaluations->execute();
             error_log("Évaluations supprimées pour l'entreprise ID: $id");
             
-            $sqlCandidatures = "DELETE FROM Candidatures WHERE offre_id IN (SELECT id FROM Offres WHERE entreprise_id = ?)";
+            $sqlCandidatures = "DELETE FROM Candidatures WHERE offre_id IN (SELECT id FROM Offres WHERE entreprise_id = :id)";
             $stmtCandidatures = $this->db->prepare($sqlCandidatures);
-            $stmtCandidatures->execute([$id]);
+            $stmtCandidatures->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmtCandidatures->execute();
             error_log("Candidatures supprimées pour l'entreprise ID: $id");
             
-            $sqlOffres = "DELETE FROM Offres WHERE entreprise_id = ?";
+            $sqlOffres = "DELETE FROM Offres WHERE entreprise_id = :id";
             $stmtOffres = $this->db->prepare($sqlOffres);
-            $stmtOffres->execute([$id]);
+            $stmtOffres->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmtOffres->execute();
             error_log("Offres supprimées pour l'entreprise ID: $id");
             
-            $sqlEntreprise = "DELETE FROM Entreprises WHERE id = ?";
+            $sqlEntreprise = "DELETE FROM Entreprises WHERE id = :id";
             $stmtEntreprise = $this->db->prepare($sqlEntreprise);
-            $result = $stmtEntreprise->execute([$id]);
+            $stmtEntreprise->bindParam(':id', $id, PDO::PARAM_INT);
+            $result = $stmtEntreprise->execute();
             
             if (!$result) {
                 error_log("Erreur lors de la suppression de l'entreprise ID: $id - " . $this->db->getConnection()->errorInfo()[2]);
@@ -178,20 +204,27 @@ class EntrepriseModel {
     public function rateEntreprise($entrepriseId, $utilisateurId, $note)
     {
         try {
-            $sql = "SELECT id FROM Evaluations WHERE entreprise_id = ? AND utilisateur_id = ?";
+            $sql = "SELECT id FROM Evaluations WHERE entreprise_id = :entrepriseId AND utilisateur_id = :utilisateurId";
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([$entrepriseId, $utilisateurId]);
+            $stmt->bindParam(':entrepriseId', $entrepriseId, PDO::PARAM_INT);
+            $stmt->bindParam(':utilisateurId', $utilisateurId, PDO::PARAM_INT);
+            $stmt->execute();
             
             if ($stmt->rowCount() > 0) {
                 $row = $stmt->fetch();
                 $noteId = $row['id'];
-                $sql = "UPDATE Evaluations SET note = ? WHERE id = ?";
+                $sql = "UPDATE Evaluations SET note = :note WHERE id = :noteId";
                 $stmt = $this->db->prepare($sql);
-                return $stmt->execute([$note, $noteId]);
+                $stmt->bindParam(':note', $note, PDO::PARAM_INT);
+                $stmt->bindParam(':noteId', $noteId, PDO::PARAM_INT);
+                return $stmt->execute();
             } else {
-                $sql = "INSERT INTO Evaluations (entreprise_id, utilisateur_id, note) VALUES (?, ?, ?)";
+                $sql = "INSERT INTO Evaluations (entreprise_id, utilisateur_id, note) VALUES (:entrepriseId, :utilisateurId, :note)";
                 $stmt = $this->db->prepare($sql);
-                return $stmt->execute([$entrepriseId, $utilisateurId, $note]);
+                $stmt->bindParam(':entrepriseId', $entrepriseId, PDO::PARAM_INT);
+                $stmt->bindParam(':utilisateurId', $utilisateurId, PDO::PARAM_INT);
+                $stmt->bindParam(':note', $note, PDO::PARAM_INT);
+                return $stmt->execute();
             }
         } catch (PDOException $e) {
             return false;
@@ -199,16 +232,24 @@ class EntrepriseModel {
     }
     
     public function getEvaluations($entrepriseId) {
-        $sql = "SELECT ev.*, u.prenom, u.nom
+        // Requête SQL simplifiée avec alias clairs
+        $sql = "SELECT 
+                ev.id as id, 
+                ev.entreprise_id, 
+                ev.utilisateur_id, 
+                ev.note, 
+                u.prenom, 
+                u.nom
                 FROM Evaluations ev
                 JOIN Utilisateurs u ON ev.utilisateur_id = u.id
-                WHERE ev.entreprise_id = ?
+                WHERE ev.entreprise_id = :entrepriseId
                 ORDER BY ev.id DESC";
                 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$entrepriseId]);
+        $stmt->bindParam(':entrepriseId', $entrepriseId, PDO::PARAM_INT);
+        $stmt->execute();
         
-        return $stmt->fetchAll();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
     public function getOffresEntreprise($entrepriseId) {
@@ -216,12 +257,13 @@ class EntrepriseModel {
                 COUNT(c.id) as nombre_candidatures 
                 FROM Offres o 
                 LEFT JOIN Candidatures c ON o.id = c.offre_id
-                WHERE o.entreprise_id = ?
+                WHERE o.entreprise_id = :entrepriseId
                 GROUP BY o.id
                 ORDER BY o.date_debut DESC";
                 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$entrepriseId]);
+        $stmt->bindParam(':entrepriseId', $entrepriseId, PDO::PARAM_INT);
+        $stmt->execute();
         
         return $stmt->fetchAll();
     }
@@ -230,10 +272,11 @@ class EntrepriseModel {
         $sql = "SELECT COUNT(c.id) as total_candidatures
                 FROM Candidatures c
                 JOIN Offres o ON c.offre_id = o.id
-                WHERE o.entreprise_id = ?";
+                WHERE o.entreprise_id = :entrepriseId";
                 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$entrepriseId]);
+        $stmt->bindParam(':entrepriseId', $entrepriseId, PDO::PARAM_INT);
+        $stmt->execute();
         $row = $stmt->fetch();
         
         return $row ? $row['total_candidatures'] : 0;

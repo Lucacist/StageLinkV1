@@ -89,7 +89,7 @@
         </div>
 
         <div class="entreprise-section avis-section">
-            <h2>Notation de l'entreprise</h2>
+            <h2>Évaluations de l'entreprise</h2>
             
             {% if session.user_id is defined %}
             <div class="add-avis">
@@ -119,34 +119,7 @@
             </div>
             {% endif %}
             
-            {% if evaluations is empty %}
-                <p class="no-avis">Aucune note pour le moment</p>
-            {% else %}
-                <div class="avis-list">
-                    <div class="rating-distribution">
-                        <h3>Distribution des notes ({{ evaluations|length }} notes)</h3>
-                        <div class="rating-bars">
-                            {% set total = evaluations|length %}
-                            {% set counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0} %}
-                            
-                            {% for avis in evaluations %}
-                                {% set counts = counts|merge({(avis.note): counts[avis.note] + 1}) %}
-                            {% endfor %}
-                            
-                            {% for i in 5..1 %}
-                                {% set percentage = total > 0 ? (counts[i] / total) * 100 : 0 %}
-                                <div class="rating-bar">
-                                    <div class="rating-label">{{ i }} ★</div>
-                                    <div class="bar-container">
-                                        <div class="bar" style="width: {{ percentage }}%"></div>
-                                    </div>
-                                    <div class="rating-count">{{ counts[i] }}</div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
+            
         </div>
     </div>
 </div>
@@ -245,7 +218,7 @@
     
     // Fonctions pour le modal de modification
     function openEditModal() {
-        document.getElementById('editModal').style.display = 'block';
+        document.getElementById('editModal').style.display = 'flex';
     }
     
     function closeEditModal() {
@@ -254,7 +227,7 @@
     
     // Fonctions pour le modal de suppression
     function confirmDelete() {
-        document.getElementById('deleteModal').style.display = 'block';
+        document.getElementById('deleteModal').style.display = 'flex';
     }
     
     function closeDeleteModal() {

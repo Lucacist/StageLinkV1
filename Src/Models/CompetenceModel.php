@@ -9,7 +9,8 @@ class CompetenceModel {
     
     public function getAllCompetences() {
         $sql = "SELECT * FROM Competences ORDER BY nom";
-        $stmt = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
         
         return $stmt->fetchAll();
     }
