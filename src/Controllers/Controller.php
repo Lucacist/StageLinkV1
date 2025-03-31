@@ -1,5 +1,5 @@
 <?php
-require_once ROOT_PATH . '/src/config/TwigConfig.php';
+require_once ROOT_PATH . '/Src/config/TwigConfig.php';
 
 class controller {
     protected $twig;
@@ -41,7 +41,7 @@ class controller {
     }
     
     protected function hasPermission($permissionCode) {
-        require_once ROOT_PATH . '/src/models/utilisateurmodel.php';
+        require_once ROOT_PATH . '/Src/Models/UtilisateurModel.php';
         
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -94,8 +94,3 @@ class controller {
         exit();
     }
 }
-
-
-
-
-

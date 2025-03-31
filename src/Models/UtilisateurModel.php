@@ -3,7 +3,7 @@ class utilisateurmodel {
     private $db;
     
     public function __construct() {
-        require_once ROOT_PATH . '/src/models/database.php';
+        require_once ROOT_PATH . '/Src/Models/Database.php';
         $this->db = database::getInstance();
     }
     
@@ -130,7 +130,3 @@ class utilisateurmodel {
         return $row ? $row['id'] : null;
     }
 }
-
-
-
-
