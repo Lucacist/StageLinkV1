@@ -17,7 +17,7 @@ class offremodel {
         
         $offres = [];
         while ($row = $stmt->fetch()) {
-            $row['competences'] = $this->getCompetencesForOffre($row['id']);
+            $row['competences'] = $this->ggetOffreCompetences($row['id']);
             $offres[] = $row;
         }
         
@@ -41,7 +41,7 @@ class offremodel {
         
         $row = $stmt->fetch();
         if ($row) {
-            $row['competences'] = $this->getCompetencesForOffre($id);
+            $row['competences'] = $this->ggetOffreCompetences($id);
             return $row;
         }
         
@@ -228,10 +228,6 @@ class offremodel {
         return $stmt->fetchAll();
     }
     
-    public function getCompetencesForOffre($offreId) {
-        return $this->getOffreCompetences($offreId);
-    }
-    
     public function isOffreLiked($offreId, $utilisateurId) {
         $sql = "SELECT COUNT(*) as count 
                 FROM wishlist 
@@ -298,7 +294,7 @@ class offremodel {
         
         $offres = [];
         while ($row = $stmt->fetch()) {
-            $row['competences'] = $this->getCompetencesForOffre($row['id']);
+            $row['competences'] = $this->ggetOffreCompetences($row['id']);
             if ($userId) {
                 $row['is_wishlisted'] = $this->isOffreLiked($row['id'], $userId);
             }
@@ -322,7 +318,7 @@ class offremodel {
         
         $offres = [];
         while ($row = $stmt->fetch()) {
-            $row['competences'] = $this->getCompetencesForOffre($row['id']);
+            $row['competences'] = $this->ggetOffreCompetences($row['id']);
             $offres[] = $row;
         }
         
