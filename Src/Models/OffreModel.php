@@ -131,10 +131,61 @@ class OffreModel {
     }
     
     public function deleteOffre($id) {
-        $sql = "DELETE FROM Offres WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
+        $this->db->getConnection()->beginTransaction();
         
-        return $stmt->execute([$id]);
+        try {
+            // Vérifier si l'offre existe
+            $checkSql = "SELECT id FROM Offres WHERE id = :id";
+            $checkStmt = $this->db->prepare($checkSql);
+            $checkStmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $checkStmt->execute();
+            
+            if ($checkStmt->rowCount() === 0) {
+                error_log("Tentative de suppression d'une offre inexistante (ID: $id)");
+                return false;
+            }
+            
+            // 1. Supprimer les entrées dans la table Wishlist liées à cette offre
+            $sqlWishlist = "DELETE FROM Wishlist WHERE offre_id = :id";
+            $stmtWishlist = $this->db->prepare($sqlWishlist);
+            $stmtWishlist->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmtWishlist->execute();
+            error_log("Entrées Wishlist supprimées pour l'offre ID: $id");
+            
+            // 2. Supprimer les compétences liées à cette offre
+            $sqlCompetencesOffres = "DELETE FROM Offres_Competences WHERE offre_id = :id";
+            $stmtCompetencesOffres = $this->db->prepare($sqlCompetencesOffres);
+            $stmtCompetencesOffres->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmtCompetencesOffres->execute();
+            error_log("Compétences supprimées pour l'offre ID: $id");
+            
+            // 3. Supprimer les candidatures liées à cette offre
+            $sqlCandidatures = "DELETE FROM Candidatures WHERE offre_id = :id";
+            $stmtCandidatures = $this->db->prepare($sqlCandidatures);
+            $stmtCandidatures->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmtCandidatures->execute();
+            error_log("Candidatures supprimées pour l'offre ID: $id");
+            
+            // 4. Finalement, supprimer l'offre elle-même
+            $sqlOffre = "DELETE FROM Offres WHERE id = :id";
+            $stmtOffre = $this->db->prepare($sqlOffre);
+            $stmtOffre->bindParam(':id', $id, PDO::PARAM_INT);
+            $result = $stmtOffre->execute();
+            
+            if (!$result) {
+                error_log("Erreur lors de la suppression de l'offre ID: $id - " . print_r($this->db->getConnection()->errorInfo(), true));
+                $this->db->getConnection()->rollBack();
+                return false;
+            }
+            
+            $this->db->getConnection()->commit();
+            error_log("Offre ID: $id supprimée avec succès");
+            return true;
+        } catch (PDOException $e) {
+            error_log("Exception lors de la suppression de l'offre ID: $id - " . $e->getMessage());
+            $this->db->getConnection()->rollBack();
+            return false;
+        }
     }
     
     public function getOffreCompetences($offreId) {

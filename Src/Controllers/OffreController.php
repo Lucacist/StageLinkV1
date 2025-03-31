@@ -2,7 +2,6 @@
 require_once ROOT_PATH . '/src/Controllers/Controller.php';
 require_once ROOT_PATH . '/src/Models/OffreModel.php';
 require_once ROOT_PATH . '/src/Models/EntrepriseModel.php';
-require_once ROOT_PATH . '/src/Controllers/Pagination.php';
 
 class OffreController extends Controller {
     private $offreModel;
@@ -17,33 +16,30 @@ class OffreController extends Controller {
     public function index() {
         $this->checkPageAccess('VOIR_OFFRE');
         
+        require_once ROOT_PATH . '/src/Controllers/Pagination.php';
+        
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
         
         if (!empty($searchTerm)) {
-            // Recherche avec terme
             $totalOffres = $this->offreModel->countOffresBySearch($searchTerm);
             
             $pagination = new Pagination($totalOffres, 5, $page);
             
-            $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
             $offres = $this->offreModel->searchOffres(
                 $searchTerm,
                 $pagination->getLimit(), 
                 $pagination->getOffset(),
-                $userId
+                isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null
             );
         } else {
-            // Sans recherche
             $totalOffres = $this->offreModel->countAllOffres();
             
             $pagination = new Pagination($totalOffres, 5, $page);
             
-            $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
             $offres = $this->offreModel->getOffresWithPagination(
                 $pagination->getLimit(), 
-                $pagination->getOffset(),
-                $userId
+                $pagination->getOffset()
             );
         }
         
@@ -156,71 +152,101 @@ class OffreController extends Controller {
     }
     
     public function traiter() {
-        if (!isset($_SESSION['user_id'])) {
-            $this->redirect('login');
-        }
+        error_log("=== DÉBUT MÉTHODE TRAITER ===");
+        // Suppression temporaire de la vérification des permissions
+        // $this->checkPageAccess('GERER_OFFRES');
         
-        if (!isset($_SESSION['user_role']) || ($_SESSION['user_role'] !== 'ADMIN' && $_SESSION['user_role'] !== 'PILOTE')) {
-            $this->redirect('accueil');
-        }
-        
+        error_log("Méthode HTTP: " . $_SERVER['REQUEST_METHOD']);
         error_log("POST data: " . print_r($_POST, true));
+        error_log("SESSION data: " . print_r($_SESSION, true));
         
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $action = $_POST['action'] ?? '';
-            $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-            
-            if ($action === 'create' || $action === 'update') {
-                $entrepriseId = isset($_POST['entreprise_id']) ? (int)$_POST['entreprise_id'] : 0;
-                $titre = $_POST['titre'] ?? '';
-                $description = $_POST['description'] ?? '';
-                $baseRemuneration = isset($_POST['base_remuneration']) ? (float)$_POST['base_remuneration'] : 0;
-                $dateDebut = !empty($_POST['date_debut']) ? $_POST['date_debut'] : date('Y-m-d');
-                $dateFin = !empty($_POST['date_fin']) ? $_POST['date_fin'] : date('Y-m-d', strtotime('+3 months'));
-                $competences = isset($_POST['competences']) ? $_POST['competences'] : [];
-                
-                error_log("Création d'offre - Données reçues: " . json_encode([
-                    'action' => $action,
-                    'entrepriseId' => $entrepriseId,
-                    'titre' => $titre,
-                    'competences' => $competences
-                ]));
-                
-                if ($action === 'create') {
-                    $offreId = $this->offreModel->createOffre(
-                        $entrepriseId, 
-                        $titre, 
-                        $description, 
-                        $baseRemuneration, 
-                        $dateDebut, 
-                        $dateFin,
-                        $competences
-                    );
-                    
-                    if (!$offreId) {
-                        $_SESSION['error_message'] = "Erreur lors de la création de l'offre.";
-                    } else {
-                        $_SESSION['success_message'] = "L'offre a été créée avec succès.";
-                    }
-                } else {
-                    $success = $this->offreModel->updateOffre($id, $entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin);
-                    
-                    if ($success) {
-                        $this->offreModel->addOffreCompetences($id, $competences);
-                    }
-                    
-                    if (!$success) {
-                        $_SESSION['error_message'] = "Erreur lors de la mise à jour de l'offre.";
-                    } else {
-                        $_SESSION['success_message'] = "L'offre a été mise à jour avec succès.";
-                    }
-                }
-            } elseif ($action === 'delete' && $id > 0) {
-                $this->offreModel->deleteOffre($id);
-            }
+        // Vérifier si l'utilisateur est connecté
+        if (!isset($_SESSION['user_id'])) {
+            error_log("Utilisateur non connecté, redirection vers login");
+            $_SESSION['error_message'] = "Vous devez être connecté pour effectuer cette action.";
+            $this->redirect('login');
+            return;
         }
         
-        $this->redirect('dashboard');
+        // Vérifier les permissions basées uniquement sur le rôle
+        if (!isset($_SESSION['user_role']) || ($_SESSION['user_role'] !== 'ADMIN' && $_SESSION['user_role'] !== 'PILOTE')) {
+            error_log("Utilisateur sans permission (rôle: " . ($_SESSION['user_role'] ?? 'non défini') . "), redirection vers accueil");
+            $_SESSION['error_message'] = "Vous n'avez pas les permissions nécessaires pour effectuer cette action.";
+            $this->redirect('accueil');
+            return;
+        }
+        
+        // Vérifier la méthode HTTP
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            error_log("Méthode HTTP incorrecte, redirection vers dashboard");
+            $this->redirect('dashboard');
+            return;
+        }
+        
+        $action = $_POST['action'] ?? '';
+        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+        
+        error_log("Action: " . $action);
+        error_log("ID: " . $id);
+        
+        if ($action === 'update' && $id > 0) {
+            error_log("Traitement de l'action update pour l'offre ID: " . $id);
+            $entrepriseId = isset($_POST['entreprise_id']) ? (int)$_POST['entreprise_id'] : 0;
+            $titre = $_POST['titre'] ?? '';
+            $description = $_POST['description'] ?? '';
+            $baseRemuneration = isset($_POST['base_remuneration']) ? (float)$_POST['base_remuneration'] : 0;
+            $dateDebut = !empty($_POST['date_debut']) ? $_POST['date_debut'] : date('Y-m-d');
+            $dateFin = !empty($_POST['date_fin']) ? $_POST['date_fin'] : date('Y-m-d', strtotime('+3 months'));
+            
+            error_log("Mise à jour d'offre - Données reçues: " . json_encode([
+                'entrepriseId' => $entrepriseId,
+                'titre' => $titre,
+                'description' => $description,
+                'baseRemuneration' => $baseRemuneration,
+                'dateDebut' => $dateDebut,
+                'dateFin' => $dateFin
+            ]));
+            
+            $success = $this->offreModel->updateOffre($id, $entrepriseId, $titre, $description, $baseRemuneration, $dateDebut, $dateFin);
+            
+            if ($success) {
+                error_log("Mise à jour réussie pour l'offre ID: " . $id);
+                $_SESSION['success_message'] = "L'offre a été mise à jour avec succès.";
+            } else {
+                error_log("Échec de la mise à jour pour l'offre ID: " . $id);
+                $_SESSION['error_message'] = "Erreur lors de la mise à jour de l'offre.";
+            }
+            
+            // Utiliser l'ancien format d'URL pour la redirection
+            header('Location: index.php?route=offre_details&id=' . $id);
+            exit();
+            
+        } elseif ($action === 'delete' && $id > 0) {
+            error_log("Traitement de l'action delete pour l'offre ID: " . $id);
+            
+            $success = $this->offreModel->deleteOffre($id);
+            
+            if ($success) {
+                error_log("Suppression réussie pour l'offre ID: " . $id);
+                $_SESSION['success_message'] = "L'offre a été supprimée avec succès.";
+                // Utiliser l'ancien format d'URL pour la redirection
+                header('Location: index.php?route=offres');
+                exit();
+            } else {
+                error_log("Échec de la suppression pour l'offre ID: " . $id);
+                $_SESSION['error_message'] = "Erreur lors de la suppression de l'offre.";
+                // Utiliser l'ancien format d'URL pour la redirection
+                header('Location: index.php?route=offre_details&id=' . $id);
+                exit();
+            }
+        } else {
+            error_log("Action non reconnue ou ID invalide, redirection vers dashboard");
+            // Utiliser l'ancien format d'URL pour la redirection
+            header('Location: index.php?route=dashboard');
+            exit();
+        }
+        
+        error_log("=== FIN MÉTHODE TRAITER ===");
     }
     
     public function like() {

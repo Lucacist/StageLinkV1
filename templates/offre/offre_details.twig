@@ -19,6 +19,13 @@
         <div class="offre-header">
             <h2>{{ offre.titre }}</h2>
             <h3>{{ offre.entreprise_nom }}</h3>
+            
+            {% if session.user_role is defined and (session.user_role == 'ADMIN' or session.user_role == 'PILOTE') %}
+            <div class="admin-actions">
+                <button id="editBtn" class="btn-view-applications">Modifier l'offre</button>
+                <button id="deleteBtn" class="btn-view-red">Supprimer l'offre</button>
+            </div>
+            {% endif %}
         </div>
 
         <div class="offre-section">
@@ -131,14 +138,175 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Modal pour modifier une offre -->
+{% if session.user_role is defined and (session.user_role == 'ADMIN' or session.user_role == 'PILOTE') %}
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close close-edit">&times;</span>
+        <h3>Modifier l'offre</h3>
+        
+        <form id="editOffreForm" action="index.php?route=traiter_offre" method="POST" class="form-offre">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="id" value="{{ offre.id }}">
+            
+            <div class="form-group">
+                <label for="edit_entreprise_id">Entreprise</label>
+                <select id="edit_entreprise_id" name="entreprise_id" required>
+                    <option value="{{ offre.entreprise_id }}" selected>{{ offre.entreprise_nom }}</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="edit_titre">Titre de l'offre</label>
+                <input type="text" id="edit_titre" name="titre" value="{{ offre.titre }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="edit_description">Description</label>
+                <textarea id="edit_description" name="description" rows="5" required>{{ offre.description }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="edit_base_remuneration">Base de rémunération (€)</label>
+                <input type="number" id="edit_base_remuneration" name="base_remuneration" value="{{ offre.base_remuneration }}" step="0.01" min="0">
+            </div>
+            
+            <div class="form-group">
+                <label for="edit_date_debut">Date de début</label>
+                <input type="date" id="edit_date_debut" name="date_debut" value="{{ offre.date_debut }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="edit_date_fin">Date de fin</label>
+                <input type="date" id="edit_date_fin" name="date_fin" value="{{ offre.date_fin }}" required>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-view-red cancel-edit-btn">Annuler</button>
+                <button type="submit" class="btn-view-applications">Enregistrer les modifications</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal pour confirmer la suppression -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <span class="close close-delete">&times;</span>
+        <h3>Confirmer la suppression</h3>
+        <p>Êtes-vous sûr de vouloir supprimer l'offre <strong>{{ offre.titre }}</strong> ?</p>
+        <p class="warning">Attention : Cette action est irréversible et supprimera également toutes les candidatures associées à cette offre.</p>
+        
+        <form id="deleteOffreForm" action="index.php?route=traiter_offre" method="POST">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id" value="{{ offre.id }}">
+            
+            <div class="form-actions">
+                <button type="button" class="btn-view-red cancel-delete-btn">Annuler</button>
+                <button type="submit" class="btn-view-applications">Confirmer la suppression</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block javascripts %}
 <script src="static/js/candidature.js"></script>
 <script>
-document.getElementById("cv").addEventListener("change", function () {
-  const fileName = this.files.length > 0 ? this.files[0].name : "No file chosen";
-  document.getElementById("file-name").textContent = fileName;
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du champ de fichier pour la candidature
+    const cvInput = document.getElementById("cv");
+    if (cvInput) {
+        cvInput.addEventListener("change", function () {
+            const fileName = this.files.length > 0 ? this.files[0].name : "Aucun fichier sélectionné";
+            document.getElementById("file-name").textContent = fileName;
+        });
+    }
+
+    // Gestion des modales
+    const editModal = document.getElementById('editModal');
+    const deleteModal = document.getElementById('deleteModal');
+    const editBtn = document.getElementById('editBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const closeEditBtn = document.querySelector('.close-edit');
+    const closeDeleteBtn = document.querySelector('.close-delete');
+    const cancelEditBtn = document.querySelector('.cancel-edit-btn');
+    const cancelDeleteBtn = document.querySelector('.cancel-delete-btn');
+    
+    // Ouvrir le modal de modification
+    if (editBtn) {
+        editBtn.addEventListener('click', function() {
+            console.log('Bouton de modification cliqué');
+            editModal.style.display = 'block';
+        });
+    }
+    
+    // Ouvrir le modal de suppression
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            console.log('Bouton de suppression cliqué');
+            deleteModal.style.display = 'block';
+        });
+    }
+    
+    // Fermer le modal de modification
+    if (closeEditBtn) {
+        closeEditBtn.addEventListener('click', function() {
+            editModal.style.display = 'none';
+        });
+    }
+    
+    // Fermer le modal de modification avec le bouton Annuler
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', function() {
+            editModal.style.display = 'none';
+        });
+    }
+    
+    // Fermer le modal de suppression
+    if (closeDeleteBtn) {
+        closeDeleteBtn.addEventListener('click', function() {
+            deleteModal.style.display = 'none';
+        });
+    }
+    
+    // Fermer le modal de suppression avec le bouton Annuler
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', function() {
+            deleteModal.style.display = 'none';
+        });
+    }
+    
+    // Fermer les modals en cliquant en dehors
+    window.addEventListener('click', function(event) {
+        if (event.target == editModal) {
+            editModal.style.display = 'none';
+        }
+        if (event.target == deleteModal) {
+            deleteModal.style.display = 'none';
+        }
+    });
+    
+    // Gestion du bouton pour afficher le formulaire de candidature
+    const btnShowForm = document.getElementById("btn-show-form");
+    const formCandidature = document.getElementById("form-candidature");
+    const btnCancel = document.getElementById("btn-cancel");
+    
+    if (btnShowForm) {
+        btnShowForm.addEventListener("click", function() {
+            formCandidature.style.display = "block";
+            this.style.display = "none";
+        });
+    }
+    
+    if (btnCancel) {
+        btnCancel.addEventListener("click", function() {
+            formCandidature.style.display = "none";
+            btnShowForm.style.display = "block";
+        });
+    }
 });
 </script>
 {% endblock %}
