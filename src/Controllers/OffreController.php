@@ -1,22 +1,22 @@
 <?php
-require_once ROOT_PATH . '/src/controllers/controller.php';
-require_once ROOT_PATH . '/src/models/offremodel.php';
-require_once ROOT_PATH . '/src/models/entreprisemodel.php';
+require_once ROOT_PATH . '/Src/Controllers/Controller.php';
+require_once ROOT_PATH . '/Src/Models/OffreModel.php';
+require_once ROOT_PATH . '/Src/Models/EntrepriseModel.php';
 
-class offrecontroller extends controller {
+class OffreController extends Controller {
     private $offremodel;
     private $entreprisemodel;
     
     public function __construct() {
         parent::__construct();
-        $this->offremodel = new offremodel();
-        $this->entreprisemodel = new entreprisemodel();
+        $this->offremodel = new OffreModel();
+        $this->entreprisemodel = new EntrepriseModel();
     }
     
     public function index() {
         $this->checkPageAccess('VOIR_OFFRE');
         
-        require_once ROOT_PATH . '/src/controllers/Pagination.php';
+        require_once ROOT_PATH . '/Src/Controllers/Pagination.php';
         
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -39,13 +39,18 @@ class offrecontroller extends controller {
             
             $offres = $this->offremodel->getOffresWithPagination(
                 $pagination->getLimit(), 
-                $pagination->getOffset()
+                $pagination->getOffset(),
+                isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null
             );
         }
         
         foreach ($offres as &$offre) {
             if (isset($_SESSION['user_id'])) {
-                $offre['isLiked'] = $this->offremodel->isOffreLiked($offre['id'], $_SESSION['user_id']);
+                if (isset($offre['is_wishlisted'])) {
+                    $offre['isLiked'] = $offre['is_wishlisted'];
+                } else {
+                    $offre['isLiked'] = $this->offremodel->isOffreLiked($offre['id'], $_SESSION['user_id']);
+                }
             } else {
                 $offre['isLiked'] = false;
             }
@@ -106,8 +111,8 @@ class offrecontroller extends controller {
         if (isset($_SESSION['user_id'])) {
             $isLiked = $this->offremodel->isOffreLiked($id, $_SESSION['user_id']);
             
-            require_once ROOT_PATH . '/src/models/candidaturemodel.php';
-            $candidaturemodel = new candidaturemodel();
+            require_once ROOT_PATH . '/Src/Models/CandidatureModel.php';
+            $candidaturemodel = new CandidatureModel();
             $hasApplied = $candidaturemodel->candidatureExiste($_SESSION['user_id'], $id);
         }
         
@@ -132,8 +137,8 @@ class offrecontroller extends controller {
         $entreprises = $this->entreprisemodel->getAllEntreprises();
         
         // Charger les compétences pour le formulaire
-        require_once ROOT_PATH . '/src/models/competencemodel.php';
-        $competencemodel = new competencemodel();
+        require_once ROOT_PATH . '/Src/Models/CompetenceModel.php';
+        $competencemodel = new CompetenceModel();
         $competences = $competencemodel->getAllCompetences();
         
         $mode = 'create';
@@ -318,11 +323,3 @@ class offrecontroller extends controller {
         exit; 
     }
 }
-
-
-
-
-
-
-
-

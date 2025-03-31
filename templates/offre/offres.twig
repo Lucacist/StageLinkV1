@@ -24,7 +24,7 @@
                                 {% if session.user_id is defined %}
                                     <button type="button"
                                         class="like-button {{ offre.isLiked ? 'liked' : '' }}"
-                                        data-offre-id="{{ offre.id }}" onclick="toggleLikeSimple(this, {{ offre.id }})">
+                                        data-offre-id="{{ offre.id }}" onclick="toggleLikeSimple(this, {{ offre.id }}, event);">
                                         <svg class="like-svg" xmlns="http://www.w3.org/2000/svg"
                                             fill="{{ offre.isLiked ? 'red' : 'none' }}"
                                             viewBox="0 0 24 24" stroke-width="1.5"

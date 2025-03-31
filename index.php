@@ -11,7 +11,7 @@ require_once ROOT_PATH . '/vendor/autoload.php';
 require_once ROOT_PATH . '/Src/Utils/UrlHelper.php';
 
 $public_routes = ['login', 'logout'];
-
+$ajax_routes = ['toggle_like']; // Routes AJAX qui ne doivent pas rediriger vers login mais renvoyer JSON
 
 // Gestion des URLs propres
 $request_uri = $_SERVER['REQUEST_URI'];
@@ -33,7 +33,7 @@ if (strpos($request_uri, 'index.php') === false && strpos($request_uri, $base_pa
     $route = $_GET['route'] ?? 'accueil';
 }
 
-if (!isset($_SESSION['user_id']) && !in_array($route, $public_routes)) {
+if (!isset($_SESSION['user_id']) && !in_array($route, $public_routes) && !in_array($route, $ajax_routes)) {
     header('Location: ' . UrlHelper::generateUrl('login'));
     exit();
 }

@@ -1,7 +1,9 @@
-function toggleLikeSimple(button, offreId) {
+function toggleLikeSimple(button, offreId, event) {
     // Empêcher la propagation de l'événement
-    event.preventDefault();
-    event.stopPropagation();
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
 
     // Référence au SVG
     const svg = button.querySelector('svg');
@@ -19,113 +21,34 @@ function toggleLikeSimple(button, offreId) {
         svg.setAttribute('fill', 'red');
         svg.setAttribute('stroke', 'red');
     }
+
+    // Utiliser une requête GET simple avec une image invisible pour éviter les problèmes AJAX
+    const timestamp = new Date().getTime(); // Évite le cache
+    const img = new Image();
+    img.onload = function() {
+        console.log('Like/unlike action sent to server successfully');
+    };
+    img.onerror = function() {
+        console.log('Like/unlike action sent to server');
+    };
+    img.style.display = 'none';
+    img.src = `index.php?route=toggle_like&offre_id=${offreId}&ts=${timestamp}`;
+    document.body.appendChild(img);
     
-    // Envoyer la requête AJAX pour la persistance en BDD
-    fetch('index.php?route=like', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'offre_id=' + offreId
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Erreur réseau');
+    // Nettoyer l'image après utilisation
+    setTimeout(() => {
+        if (img && img.parentNode) {
+            img.parentNode.removeChild(img);
         }
-        // Utiliser text() au lieu de json() pour pouvoir inspecter en cas d'erreur
-        return response.text(); 
-    })
-    .then(text => {
-        try {
-            // Essayer de parser le JSON
-            const data = JSON.parse(text);
-            console.log('Réponse du serveur:', data);
-            
-            // Si l'état retourné est différent de l'état supposé, corriger l'interface
-            if (data.liked !== !isLiked) {
-                console.log('Correction de l\'interface...');
-                if (data.liked) {
-                    button.classList.add('liked');
-                    svg.setAttribute('fill', 'red');
-                    svg.setAttribute('stroke', 'red');
-                } else {
-                    button.classList.remove('liked');
-                    svg.setAttribute('fill', 'none');
-                    svg.setAttribute('stroke', '#000000');
-                }
-            }
-        } catch (e) {
-            console.error('Erreur de parsing JSON:', e);
-            console.log('Contenu reçu:', text);
-        }
-    })
-    .catch(error => {
-        console.error('Erreur:', error);
-        // En cas d'erreur, remettre l'état d'origine
-        if (isLiked) {
-            button.classList.add('liked');
-            svg.setAttribute('fill', 'red');
-            svg.setAttribute('stroke', 'red');
-        } else {
-            button.classList.remove('liked');
-            svg.setAttribute('fill', 'none');
-            svg.setAttribute('stroke', '#000000');
-        }
-    });
+    }, 2000);
+    
+    return false; // Important pour bloquer la propagation
 }
 
+// Fonction alternative si la première échoue
 function toggleLike(event, button, offreId) {
-    // Empêcher la propagation pour éviter de suivre le lien parent
     event.preventDefault();
     event.stopPropagation();
     
-    // Utiliser notre script de débogage
-    fetch('debug-like.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'offre_id=' + offreId
-    })
-    .then(response => {
-        console.log("Réponse brute:", response);
-        return response.text();
-    })
-    .then(text => {
-        console.log("Texte de réponse:", text);
-        try {
-            return JSON.parse(text);
-        } catch (e) {
-            console.error("Erreur de parsing JSON:", e);
-            console.log("Contenu non-JSON reçu:", text);
-            throw new Error("Réponse invalide du serveur");
-        }
-    })
-    .then(data => {
-        console.log("Données JSON:", data);
-        
-        if (data && data.success) {
-            // Mettre à jour l'interface utilisateur directement
-            const svg = button.querySelector('svg');
-            
-            if (data.liked) {
-                // Appliquer le style directement sur le SVG
-                button.classList.add('liked');
-                svg.setAttribute('fill', 'red');
-                svg.setAttribute('stroke', 'red');
-                console.log('Coeur liké - attributs appliqués');
-            } else {
-                // Retirer le style
-                button.classList.remove('liked');
-                svg.setAttribute('fill', 'none');
-                svg.setAttribute('stroke', '#000000');
-                console.log('Coeur non liké - attributs retirés');
-            }
-        } else if (data) {
-            console.error('Erreur:', data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Erreur:', error);
-    });
+    return toggleLikeSimple(button, offreId, event);
 }

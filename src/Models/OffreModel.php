@@ -1,9 +1,9 @@
 <?php
-class offremodel {
+class OffreModel {
     private $db;
     
     public function __construct() {
-        require_once ROOT_PATH . '/src/models/database.php';
+        require_once ROOT_PATH . '/Src/Models/Database.php';
         $this->db = database::getInstance();
     }
     
@@ -308,7 +308,7 @@ class offremodel {
         return $offres;
     }
     
-    public function getOffresWithPagination($limit, $offset) {
+    public function getOffresWithPagination($limit, $offset, $userId = null) {
         $sql = "SELECT o.*, e.nom as entreprise_nom 
                 FROM offres o
                 JOIN entreprises e ON o.entreprise_id = e.id
@@ -323,6 +323,9 @@ class offremodel {
         $offres = [];
         while ($row = $stmt->fetch()) {
             $row['competences'] = $this->getCompetencesForOffre($row['id']);
+            if ($userId) {
+                $row['is_wishlisted'] = $this->isOffreLiked($row['id'], $userId);
+            }
             $offres[] = $row;
         }
         
@@ -331,6 +334,3 @@ class offremodel {
     
 }
 ?>
-
-
-
