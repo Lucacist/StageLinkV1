@@ -1,26 +1,43 @@
 <?php
-// Définir le chemin racine
 define('ROOT_PATH', __DIR__);
 
-// Démarrer la session
 session_start();
 
-// Inclure la configuration
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 require_once ROOT_PATH . '/src/config/config.php';
 require_once ROOT_PATH . '/vendor/autoload.php';
+require_once ROOT_PATH . '/Src/Utils/UrlHelper.php';
 
-// Si l'utilisateur n'est pas connecté et essaie d'accéder à une route qui nécessite une authentification,
-// il est redirigé vers la page de connexion
 $public_routes = ['login', 'logout'];
-$route = $_GET['route'] ?? 'accueil';
 
-// Rediriger vers login si l'utilisateur n'est pas connecté et tente d'accéder à une route protégée
+
+// Gestion des URLs propres
+$request_uri = $_SERVER['REQUEST_URI'];
+$base_path = '/StageLinkV1/';
+
+// Vérifier si l'URL est au format propre
+if (strpos($request_uri, 'index.php') === false && strpos($request_uri, $base_path) === 0) {
+    // Extraire la route de l'URL propre
+    $path = substr($request_uri, strlen($base_path));
+    $path = parse_url($path, PHP_URL_PATH);
+    $route = trim($path, '/');
+    
+    // Si la route est vide, utiliser la route par défaut
+    if (empty($route)) {
+        $route = 'accueil';
+    }
+} else {
+    // Utiliser le paramètre GET traditionnel
+    $route = $_GET['route'] ?? 'accueil';
+}
+
 if (!isset($_SESSION['user_id']) && !in_array($route, $public_routes)) {
-    header('Location: index.php?route=login');
+    header('Location: ' . UrlHelper::generateUrl('login'));
     exit();
 }
 
-// Acheminer vers le contrôleur approprié
 switch ($route) {
     case 'accueil':
         require_once ROOT_PATH . '/src/Controllers/AccueilController.php';
@@ -137,8 +154,7 @@ switch ($route) {
         break;
         
     default:
-        // Page 404 ou redirection vers la page d'accueil
-        header('Location: index.php?route=accueil');
+        header('Location: ' . UrlHelper::generateUrl('accueil'));
         exit();
 }
 ?>
