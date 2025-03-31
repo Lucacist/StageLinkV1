@@ -3,11 +3,15 @@ define('ROOT_PATH', __DIR__);
 
 session_start();
 
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 require_once ROOT_PATH . '/src/config/config.php';
 require_once ROOT_PATH . '/vendor/autoload.php';
 require_once ROOT_PATH . '/Src/Utils/UrlHelper.php';
 
 $public_routes = ['login', 'logout'];
+
 
 // Gestion des URLs propres
 $request_uri = $_SERVER['REQUEST_URI'];
