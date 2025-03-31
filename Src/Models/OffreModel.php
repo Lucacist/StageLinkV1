@@ -12,11 +12,11 @@ class OffreModel {
                 FROM Offres o
                 JOIN Entreprises e ON o.entreprise_id = e.id
                 ORDER BY o.date_debut DESC";
-        $stmt = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
         
         $offres = [];
         while ($row = $stmt->fetch()) {
-            $row['competences'] = $this->getCompetencesForOffre($row['id']);
+            $row['competences'] = $this->getOffreCompetences($row['id']);
             $offres[] = $row;
         }
         
@@ -40,7 +40,7 @@ class OffreModel {
         
         $row = $stmt->fetch();
         if ($row) {
-            $row['competences'] = $this->getCompetencesForOffre($id);
+            $row['competences'] = $this->getOffreCompetences($id);
             return $row;
         }
         
@@ -148,9 +148,6 @@ class OffreModel {
         return $stmt->fetchAll();
     }
     
-    public function getCompetencesForOffre($offreId) {
-        return $this->getOffreCompetences($offreId);
-    }
     
     public function isOffreLiked($offreId, $utilisateurId) {
         $sql = "SELECT COUNT(*) as count 
@@ -201,7 +198,7 @@ class OffreModel {
         
         $offres = [];
         while ($row = $stmt->fetch()) {
-            $row['competences'] = $this->getCompetencesForOffre($row['id']);
+            $row['competences'] = $this->getOffreCompetences($row['id']);
             $offres[] = $row;
         }
         
