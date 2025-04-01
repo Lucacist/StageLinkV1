@@ -147,11 +147,78 @@ header form {
   padding: 0 16px;
   border-radius: 100px;
 }
+
 nav {
-  display: flex;
-  margin: 0 auto;
-  gap: 20px;
+  position: relative;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.burger-menu {
+  display: none;
+  border: 0;
+  background: none;
+  flex-direction: column;
+  cursor: pointer;
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1000;
+}
+
+.burger-menu span {
+  border-radius: 20px;
+  width: 30px;
+  height: 4px;
+  background-color: #000;
+  margin: 5px;
+  transition: 0.3s;
+}
+
+@media screen and (max-width: 768px) {
+  .burger-menu {
+    display: flex;
+  }
+
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: transparent;
+    padding: 20px;
+    box-sizing: border-box;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .nav-links.active {
+    display: flex;
+    background-color: #ffffffaa;
+    width: fit-content;
+    backdrop-filter: blur(5px);
+    border-radius: 5px;
+  }
+
+  .burger-menu.active span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+  }
+
+  .burger-menu.active span:nth-child(2) {
+    transform: rotate(-45deg) translate(5px, -5px);
+  }
+}
+
 footer {
   display: flex;
   flex-direction: column;
