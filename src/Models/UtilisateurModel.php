@@ -129,4 +129,137 @@ class utilisateurmodel {
         $row = $stmt->fetch();
         return $row ? $row['id'] : null;
     }
+    
+    // Récupère tous les utilisateurs avec pagination et filtrage par rôle
+    public function getAllUsers($page = 1, $limit = 10, $roleCode = null) {
+        $offset = ($page - 1) * $limit;
+        
+        $params = [];
+        $whereClause = '';
+        
+        if ($roleCode) {
+            $whereClause = "WHERE r.code = ?";
+            $params[] = $roleCode;
+        }
+        
+        $sql = "SELECT u.*, r.nom as role_nom, r.code as role_code
+                FROM utilisateurs u
+                JOIN roles r ON u.role_id = r.id
+                $whereClause
+                ORDER BY u.nom, u.prenom
+                LIMIT ?, ?";
+        
+        $params[] = $offset;
+        $params[] = $limit;
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        
+        return $stmt->fetchAll();
+    }
+    
+    // Compte le nombre total d'utilisateurs (pour la pagination)
+    public function countUsers($roleCode = null) {
+        $params = [];
+        $whereClause = '';
+        
+        if ($roleCode) {
+            $whereClause = "WHERE r.code = ?";
+            $params[] = $roleCode;
+        }
+        
+        $sql = "SELECT COUNT(*) as total 
+                FROM utilisateurs u
+                JOIN roles r ON u.role_id = r.id
+                $whereClause";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+        
+        return $result['total'];
+    }
+    
+    // Met à jour un utilisateur existant
+    public function updateUser($userId, $data) {
+        // Débogage: Journaliser les données reçues
+        error_log("updateUser - userId: $userId - Données reçues: " . print_r($data, true));
+        
+        // Si un email est fourni, vérifier qu'il n'existe pas déjà pour un autre utilisateur
+        if (isset($data['email'])) {
+            $sql = "SELECT COUNT(*) as count FROM utilisateurs WHERE email = ? AND id != ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$data['email'], $userId]);
+            $row = $stmt->fetch();
+            
+            if ($row['count'] > 0) {
+                return ['success' => false, 'message' => 'Un utilisateur avec cet email existe déjà.'];
+            }
+        }
+        
+        // Construire la requête de mise à jour en fonction des données fournies
+        $updateFields = [];
+        $params = [];
+        
+        foreach ($data as $field => $value) {
+            if ($field === 'mot_de_passe' && !empty($value)) {
+                // Hasher le mot de passe s'il est fourni
+                $value = password_hash($value, PASSWORD_DEFAULT);
+            } elseif ($field === 'mot_de_passe' && empty($value)) {
+                // Si le mot de passe est vide, ne pas le mettre à jour
+                continue;
+            }
+            
+            $updateFields[] = "$field = ?";
+            $params[] = $value;
+        }
+        
+        if (empty($updateFields)) {
+            return ['success' => false, 'message' => 'Aucune donnée à mettre à jour.'];
+        }
+        
+        $sql = "UPDATE utilisateurs SET " . implode(', ', $updateFields) . " WHERE id = ?";
+        $params[] = $userId;
+        
+        // Débogage: Journaliser la requête SQL et les paramètres
+        error_log("updateUser - Requête SQL: $sql");
+        error_log("updateUser - Paramètres: " . print_r($params, true));
+        
+        $stmt = $this->db->prepare($sql);
+        
+        try {
+            $stmt->execute($params);
+            return ['success' => true];
+        } catch (PDOException $e) {
+            error_log("updateUser - Erreur: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Erreur lors de la mise à jour de l\'utilisateur: ' . $e->getMessage()];
+        }
+    }
+    
+    // Supprime un utilisateur
+    public function deleteUser($userId) {
+        $sql = "DELETE FROM utilisateurs WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        
+        try {
+            $stmt->execute([$userId]);
+            return ['success' => true];
+        } catch (PDOException $e) {
+            return ['success' => false, 'message' => 'Erreur lors de la suppression de l\'utilisateur: ' . $e->getMessage()];
+        }
+    }
+    
+    // Récupère tous les utilisateurs par rôle
+    public function getUsersByRoleId($roleId) {
+        $sql = "SELECT u.*, r.nom as role_nom, r.code as role_code
+                FROM utilisateurs u
+                JOIN roles r ON u.role_id = r.id
+                WHERE u.role_id = ?
+                ORDER BY u.nom, u.prenom";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$roleId]);
+        
+        return $stmt->fetchAll();
+    }
 }

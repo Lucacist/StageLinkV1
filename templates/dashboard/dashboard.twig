@@ -4,25 +4,160 @@
     <link rel="stylesheet" href="static/css/dashboard.css">
 {% endblock %}
 
+{% block javascripts %}
+    <script src="static/js/users-management.js"></script>
+{% endblock %}
+
 {% block content %}
 <div class="dashboard">
     <div class="dashboard-header">
         <h1>Tableau de bord</h1>
     </div>
 
-    {% if error is defined and error %}
-    <div class="alert alert-error">
-        {{ error }}
-    </div>
-    {% endif %}
-    
-    {% if success is defined and success %}
-    <div class="alert alert-success">
-        {{ success }}
-    </div>
-    {% endif %}
-
+    <!-- Sections du tableau de bord -->
     <div class="dashboard-content">
+        <!-- Messages d'alerte -->
+        <div class="alerts-container">
+            {% if error %}
+                <div class="alert alert-error">
+                    {{ error }}
+                </div>
+            {% endif %}
+            {% if success %}
+                <div class="alert alert-success">
+                    {{ success }}
+                </div>
+            {% endif %}
+        </div>
+        
+
+        <!-- Section des utilisateurs -->
+        <div class="card">
+            <h2>Gestion des utilisateurs</h2>
+            
+            <!-- Formulaire de création d'utilisateur -->
+            {% if session.user_role == 'ADMIN' or session.user_role == 'PILOTE' %}
+            <div class="new-user-section">
+                <h3>Créer un nouvel utilisateur</h3>
+                <form class="form-utilisateur" action="index.php?route=traiter_utilisateur" method="post">
+                    <input type="hidden" name="action" value="create">
+                    
+                    <div class="form-group">
+                        <label for="nom">Nom</label>
+                        <input type="text" id="nom" name="nom" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="prenom">Prénom</label>
+                        <input type="text" id="prenom" name="prenom" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="mot_de_passe">Mot de passe</label>
+                        <input type="password" id="mot_de_passe" name="mot_de_passe" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="role">Rôle</label>
+                        <select id="role" name="role" required>
+                            <option value="ETUDIANT">Étudiant</option>
+                            {% if session.user_role == 'ADMIN' %}
+                            <option value="PILOTE">Pilote</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-action-buttons">
+                        <button type="submit" class="btn btn-primary">Créer l'utilisateur</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+            
+            <!-- Liste des étudiants -->
+            <div class="users-section">
+                <h3>Liste des étudiants</h3>
+                {% if etudiants|length > 0 %}
+                    <div class="users-table-container">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nom</th>
+                                    <th>Prénom</th>
+                                    <th>Email</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for etudiant in etudiants %}
+                                    <tr data-user-id="{{ etudiant.id }}">
+                                        <td data-label="ID">{{ etudiant.id }}</td>
+                                        <td data-label="Nom">{{ etudiant.nom }}</td>
+                                        <td data-label="Prénom">{{ etudiant.prenom }}</td>
+                                        <td data-label="Email">{{ etudiant.email }}</td>
+                                        <td data-label="Actions" class="actions">
+                                            <button class="btn-edit" onclick="editUser({{ etudiant.id }})">Modifier</button>
+                                            {% if session.user_id != etudiant.id %}
+                                                <button class="btn-delete" onclick="deleteUser({{ etudiant.id }})">Supprimer</button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>Aucun étudiant trouvé.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Liste des pilotes (visible uniquement par les admins) -->
+            {% if session.user_role == 'ADMIN' %}
+            <div class="users-section">
+                <h3>Liste des pilotes</h3>
+                {% if pilotes|length > 0 %}
+                    <div class="users-table-container">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nom</th>
+                                    <th>Prénom</th>
+                                    <th>Email</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pilote in pilotes %}
+                                    <tr data-user-id="{{ pilote.id }}">
+                                        <td data-label="ID">{{ pilote.id }}</td>
+                                        <td data-label="Nom">{{ pilote.nom }}</td>
+                                        <td data-label="Prénom">{{ pilote.prenom }}</td>
+                                        <td data-label="Email">{{ pilote.email }}</td>
+                                        <td data-label="Actions" class="actions">
+                                            <button class="btn-edit" onclick="editUser({{ pilote.id }})">Modifier</button>
+                                            {% if session.user_id != pilote.id %}
+                                                <button class="btn-delete" onclick="deleteUser({{ pilote.id }})">Supprimer</button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>Aucun pilote trouvé.</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        
         {% if userPermissions.GERER_ENTREPRISES is defined and userPermissions.GERER_ENTREPRISES %}
         <div class="card">
             <h2>Créer une entreprise</h2>
@@ -55,7 +190,7 @@
             </form>
         </div>
         {% endif %}
-
+        
         {% if userPermissions.CREER_OFFRE is defined and userPermissions.CREER_OFFRE %}
         <div class="card">
             <h2>Créer une offre</h2>
@@ -121,51 +256,6 @@
                 
                 <div class="form-actions">
                     <button type="submit" class="btn-submit">Créer l'offre</button>
-                </div>
-            </form>
-        </div>
-        {% endif %}
-        
-        {% if userPermissions.GERER_UTILISATEURS is defined and userPermissions.GERER_UTILISATEURS or session.user_role == 'ADMIN' or session.user_role == 'PILOTE' %}
-        <div class="card">
-            <h2>Créer un utilisateur</h2>
-            
-            <form action="index.php?route=traiter_utilisateur" method="POST" class="form-utilisateur">
-                <input type="hidden" name="action" value="create">
-                
-                <div class="form-group">
-                    <label for="utilisateur_nom">Nom*</label>
-                    <input type="text" id="utilisateur_nom" name="nom" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="utilisateur_prenom">Prénom*</label>
-                    <input type="text" id="utilisateur_prenom" name="prenom" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="utilisateur_email">Email*</label>
-                    <input type="email" id="utilisateur_email" name="email" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="utilisateur_mot_de_passe">Mot de passe*</label>
-                    <input type="password" id="utilisateur_mot_de_passe" name="mot_de_passe" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="utilisateur_role">Rôle*</label>
-                    <select id="utilisateur_role" name="role" required>
-                        <option value="">Sélectionnez un rôle</option>
-                        {% if session.user_role == 'ADMIN' %}
-                            <option value="PILOTE">Pilote</option>
-                        {% endif %}
-                        <option value="ETUDIANT">Étudiant</option>
-                    </select>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="submit" class="btn-submit">Créer l'utilisateur</button>
                 </div>
             </form>
         </div>

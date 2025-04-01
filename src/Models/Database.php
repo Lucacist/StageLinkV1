@@ -1,13 +1,19 @@
 <?php
+use Dotenv\Dotenv;
+
 class database {
     private static $instance = null;
     private $conn;
     
     private function __construct() {
-        $servername = "localhost";
-        $username = "root";
-        $password = "";
-        $dbname = "StageLink";
+        $rootPath = dirname(dirname(dirname(__FILE__))); 
+        $dotenv = Dotenv::createImmutable($rootPath);
+        $dotenv->safeLoad(); 
+        
+        $servername = $_ENV['DB_HOST'] ?? 'localhost';
+        $username = $_ENV['DB_USER'] ?? 'root';
+        $password = $_ENV['DB_PASS'] ?? '';
+        $dbname = $_ENV['DB_NAME'] ?? 'StageLink';
         
         try {
             $this->conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
@@ -41,4 +47,3 @@ class database {
         return $this->conn->lastInsertId();
     }
 }
-
