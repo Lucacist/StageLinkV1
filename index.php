@@ -11,7 +11,7 @@ require_once ROOT_PATH . '/vendor/autoload.php';
 require_once ROOT_PATH . '/Src/Utils/UrlHelper.php';
 
 $public_routes = ['login', 'logout'];
-$ajax_routes = ['toggle_like']; // Routes AJAX qui ne doivent pas rediriger vers login mais renvoyer JSON
+$ajax_routes = ['toggle_like', 'get_user']; // Routes AJAX qui ne doivent pas rediriger vers login mais renvoyer JSON
 
 // Gestion des URLs propres
 $request_uri = $_SERVER['REQUEST_URI'];
@@ -141,10 +141,40 @@ switch ($route) {
         $controller->traiterUtilisateur();
         break;
         
+    case 'manage_users':
+        require_once ROOT_PATH . '/Src/Controllers/UtilisateurController.php';
+        $controller = new UtilisateurController();
+        $controller->index();
+        break;
+        
+    case 'create_user':
+        require_once ROOT_PATH . '/Src/Controllers/UtilisateurController.php';
+        $controller = new UtilisateurController();
+        $controller->create();
+        break;
+        
+    case 'edit_user':
+        require_once ROOT_PATH . '/Src/Controllers/UtilisateurController.php';
+        $controller = new UtilisateurController();
+        $controller->edit();
+        break;
+        
+    case 'delete_user':
+        require_once ROOT_PATH . '/Src/Controllers/UtilisateurController.php';
+        $controller = new UtilisateurController();
+        $controller->delete();
+        break;
+        
     case 'profil':
         require_once ROOT_PATH . '/Src/Controllers/ProfilController.php';
         $controller = new ProfilController();
         $controller->index();
+        break;
+        
+    case 'get_user':
+        require_once ROOT_PATH . '/Src/Controllers/DashboardController.php';
+        $controller = new DashboardController();
+        $controller->getUser();
         break;
         
     case 'logout':
