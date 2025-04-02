@@ -206,6 +206,7 @@ class entreprisecontroller extends controller {
 
         $entrepriseId = isset($_POST['entreprise_id']) ? intval($_POST['entreprise_id']) : 0;
         $note = isset($_POST['note']) ? intval($_POST['note']) : 0;
+        $commentaire = isset($_POST['commentaire']) ? trim($_POST['commentaire']) : '';
         
         if ($entrepriseId <= 0 || $note < 1 || $note > 5) {
             $_SESSION['error_message'] = "Données invalides pour l'évaluation.";
@@ -213,21 +214,15 @@ class entreprisecontroller extends controller {
             exit;
         }
 
-        $result = $this->entreprisemodel->rateEntreprise($entrepriseId, $_SESSION['user_id'], $note);
+        $result = $this->entreprisemodel->rateEntreprise($entrepriseId, $_SESSION['user_id'], $note, $commentaire);
         
         if ($result) {
-            $_SESSION['success_message'] = "Votre note a été enregistrée avec succès.";
+            $_SESSION['success_message'] = "Votre évaluation a été enregistrée avec succès.";
         } else {
-            $_SESSION['error_message'] = "Une erreur est survenue lors de l'enregistrement de votre note.";
+            $_SESSION['error_message'] = "Une erreur est survenue lors de l'enregistrement de votre évaluation.";
         }
 
         header('Location: index.php?route=entreprise_details&id=' . $entrepriseId);
         exit;
     }
 }
-
-
-
-
-
-

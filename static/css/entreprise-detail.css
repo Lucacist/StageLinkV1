@@ -19,6 +19,10 @@
   width: fit-content;
 }
 
+textarea {
+  font-family: "Inter", sans-serif;
+}
+
 .entreprise-details .navbar svg {
   width: 22px;
   height: 16px;
@@ -195,6 +199,17 @@
 .form-group textarea {
   resize: vertical;
   min-height: 100px;
+}
+
+#commentaire {
+  width: auto;
+  margin: 0 50px;
+}
+
+#rating-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .form-group small {
@@ -453,6 +468,7 @@
   cursor: pointer;
   font-weight: bold;
   opacity: 0.5;
+  width: fit-content;
   pointer-events: none;
 }
 
@@ -580,6 +596,69 @@
 .entreprise-details .avis-content p {
   margin: 0;
   white-space: pre-line;
+}
+
+/* Styles pour la liste des évaluations */
+.evaluations-list {
+  margin-top: 30px;
+}
+
+.evaluations-list h3 {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: var(--primary-color);
+}
+
+.evaluation-item {
+  background-color: var(--couleur-container);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.evaluation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.user-info {
+  font-weight: 500;
+  color: var(--primary-color);
+}
+
+.rating-stars {
+  display: flex;
+}
+
+.rating-stars .star {
+  color: #00000066;
+  font-size: 18px;
+}
+
+.rating-stars .star.filled {
+  color: var(--couleur-avis);
+}
+
+.evaluation-comment {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.evaluation-comment p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.no-evaluations {
+  font-style: italic;
+  color: #777;
+  text-align: center;
+  margin: 20px 0;
 }
 
 /* Responsive design */

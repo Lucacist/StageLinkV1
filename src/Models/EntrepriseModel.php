@@ -258,7 +258,7 @@ class entreprisemodel {
         }
     }
     
-    public function rateEntreprise($entrepriseId, $utilisateurId, $note)
+    public function rateEntreprise($entrepriseId, $utilisateurId, $note, $commentaire = '')
     {
         try {
             $sql = "SELECT id FROM evaluations WHERE entreprise_id = :entrepriseId AND utilisateur_id = :utilisateurId";
@@ -270,17 +270,19 @@ class entreprisemodel {
             if ($stmt->rowCount() > 0) {
                 $row = $stmt->fetch();
                 $noteId = $row['id'];
-                $sql = "UPDATE evaluations SET note = :note WHERE id = :noteId";
+                $sql = "UPDATE evaluations SET note = :note, commentaire = :commentaire WHERE id = :noteId";
                 $stmt = $this->db->prepare($sql);
                 $stmt->bindParam(':note', $note, PDO::PARAM_INT);
+                $stmt->bindParam(':commentaire', $commentaire, PDO::PARAM_STR);
                 $stmt->bindParam(':noteId', $noteId, PDO::PARAM_INT);
                 return $stmt->execute();
             } else {
-                $sql = "INSERT INTO evaluations (entreprise_id, utilisateur_id, note) VALUES (:entrepriseId, :utilisateurId, :note)";
+                $sql = "INSERT INTO evaluations (entreprise_id, utilisateur_id, note, commentaire) VALUES (:entrepriseId, :utilisateurId, :note, :commentaire)";
                 $stmt = $this->db->prepare($sql);
                 $stmt->bindParam(':entrepriseId', $entrepriseId, PDO::PARAM_INT);
                 $stmt->bindParam(':utilisateurId', $utilisateurId, PDO::PARAM_INT);
                 $stmt->bindParam(':note', $note, PDO::PARAM_INT);
+                $stmt->bindParam(':commentaire', $commentaire, PDO::PARAM_STR);
                 return $stmt->execute();
             }
         } catch (PDOException $e) {
@@ -295,6 +297,7 @@ class entreprisemodel {
                 ev.entreprise_id, 
                 ev.utilisateur_id, 
                 ev.note, 
+                ev.commentaire,
                 u.prenom, 
                 u.nom
                 FROM evaluations ev
@@ -339,7 +342,3 @@ class entreprisemodel {
         return $row ? $row['total_candidatures'] : 0;
     }
 }
-
-
-
-
