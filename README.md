@@ -59,6 +59,7 @@ StageLink est une application web conçue pour faciliter la recherche et la gest
 Importez le fichier SQL fourni :
 Copier
 mysql -u username -p stagelink < database/stagelink.sql
+
 Note: Le fichier SQL se trouve dans le dossier src/config du projet
 
    ```bash
