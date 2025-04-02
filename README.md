@@ -675,6 +675,7 @@ L'application est entièrement responsive et s'adapte à tous les appareils, des
 
 © 2025 Équipe StageLinkV1. Tous droits réservés.
 
-💡 Note pour les développeurs: N'oubliez pas de consulter la documentation complète dans le dossier docs/ pour plus de détails sur l'architecture et les conventions de codage.
+> [!NOTE]
+>Note pour les développeurs: N'oubliez pas de consulter la documentation complète dans le dossier docs/ pour plus de détails sur l'architecture et les conventions de codage.
 
 ---
