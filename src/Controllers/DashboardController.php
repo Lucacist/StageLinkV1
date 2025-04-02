@@ -52,17 +52,59 @@ class dashboardcontroller extends controller {
         $etudiants = [];
         $pilotes = [];
         
+        // Paramètres de pagination et recherche pour les étudiants
+        $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
+        $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+        $limit = 5; // Nombre d'étudiants par page
+        
+        // Paramètres de pagination et recherche pour les pilotes
+        $searchTermPilote = isset($_GET['search_pilote']) ? trim($_GET['search_pilote']) : '';
+        $pagePilote = isset($_GET['page_pilote']) ? max(1, intval($_GET['page_pilote'])) : 1;
+        $limitPilote = 5; // Nombre de pilotes par page
+        
         // Récupérer les étudiants (accessible à tous les utilisateurs du dashboard)
         $etudiantRoleId = $this->utilisateurmodel->getRoleIdByCode('ETUDIANT');
         if ($etudiantRoleId) {
-            $etudiants = $this->utilisateurmodel->getUsersByRoleId($etudiantRoleId);
+            if (!empty($searchTerm) || $page > 1) {
+                $etudiants = $this->utilisateurmodel->searchUsersByRole($etudiantRoleId, $searchTerm, $page, $limit);
+                $totalEtudiants = $this->utilisateurmodel->countUsersByRole($etudiantRoleId, $searchTerm);
+                $totalPages = ceil($totalEtudiants / $limit);
+            } else {
+                $etudiants = $this->utilisateurmodel->getUsersByRoleId($etudiantRoleId);
+                $totalEtudiants = count($etudiants);
+                $totalPages = ceil($totalEtudiants / $limit);
+                
+                // Si le nombre d'étudiants dépasse la limite, on applique la pagination manuellement
+                if ($totalEtudiants > $limit) {
+                    $etudiants = $this->utilisateurmodel->searchUsersByRole($etudiantRoleId, '', $page, $limit);
+                }
+            }
+        } else {
+            $totalEtudiants = 0;
+            $totalPages = 0;
         }
         
         // Récupérer les pilotes (visible uniquement par les administrateurs)
         if ($userRole['role_code'] === 'ADMIN') {
             $piloteRoleId = $this->utilisateurmodel->getRoleIdByCode('PILOTE');
             if ($piloteRoleId) {
-                $pilotes = $this->utilisateurmodel->getUsersByRoleId($piloteRoleId);
+                if (!empty($searchTermPilote) || $pagePilote > 1) {
+                    $pilotes = $this->utilisateurmodel->searchUsersByRole($piloteRoleId, $searchTermPilote, $pagePilote, $limitPilote);
+                    $totalPilotes = $this->utilisateurmodel->countUsersByRole($piloteRoleId, $searchTermPilote);
+                    $totalPagesPilote = ceil($totalPilotes / $limitPilote);
+                } else {
+                    $pilotes = $this->utilisateurmodel->getUsersByRoleId($piloteRoleId);
+                    $totalPilotes = count($pilotes);
+                    $totalPagesPilote = ceil($totalPilotes / $limitPilote);
+                    
+                    // Si le nombre de pilotes dépasse la limite, on applique la pagination manuellement
+                    if ($totalPilotes > $limitPilote) {
+                        $pilotes = $this->utilisateurmodel->searchUsersByRole($piloteRoleId, '', $pagePilote, $limitPilote);
+                    }
+                }
+            } else {
+                $totalPilotes = 0;
+                $totalPagesPilote = 0;
             }
         }
         
@@ -115,7 +157,19 @@ class dashboardcontroller extends controller {
             'error' => $error,
             'success' => $success,
             'editMode' => $editMode,
-            'userToEdit' => $userToEdit
+            'userToEdit' => $userToEdit,
+            'pagination' => [
+                'page' => $page,
+                'totalPages' => $totalPages,
+                'totalItems' => $totalEtudiants
+            ],
+            'paginationPilote' => [
+                'page' => $pagePilote,
+                'totalPages' => $totalPagesPilote ?? 0,
+                'totalItems' => $totalPilotes ?? 0
+            ],
+            'searchTerm' => $searchTerm,
+            'searchTermPilote' => $searchTermPilote
         ]);
     }
     

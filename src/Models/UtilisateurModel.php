@@ -262,4 +262,57 @@ class utilisateurmodel {
         
         return $stmt->fetchAll();
     }
+    
+    // Recherche et pagination des utilisateurs par rôle
+    public function searchUsersByRole($roleId, $searchTerm = '', $page = 1, $limit = 10) {
+        $offset = ($page - 1) * $limit;
+        $params = [$roleId];
+        
+        $searchClause = '';
+        if (!empty($searchTerm)) {
+            $searchClause = "AND (u.nom LIKE ? OR u.prenom LIKE ? OR u.email LIKE ?)";
+            $searchParam = "%$searchTerm%";
+            $params[] = $searchParam;
+            $params[] = $searchParam;
+            $params[] = $searchParam;
+        }
+        
+        // Intégrer directement les valeurs de LIMIT dans la chaîne SQL
+        $sql = "SELECT u.*, r.nom as role_nom, r.code as role_code
+                FROM utilisateurs u
+                JOIN roles r ON u.role_id = r.id
+                WHERE u.role_id = ? $searchClause
+                ORDER BY u.nom, u.prenom
+                LIMIT $offset, $limit";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        
+        return $stmt->fetchAll();
+    }
+    
+    // Compte le nombre total d'utilisateurs par rôle (pour la pagination)
+    public function countUsersByRole($roleId, $searchTerm = '') {
+        $params = [$roleId];
+        
+        $searchClause = '';
+        if (!empty($searchTerm)) {
+            $searchClause = "AND (u.nom LIKE ? OR u.prenom LIKE ? OR u.email LIKE ?)";
+            $searchParam = "%$searchTerm%";
+            $params[] = $searchParam;
+            $params[] = $searchParam;
+            $params[] = $searchParam;
+        }
+        
+        $sql = "SELECT COUNT(*) as total 
+                FROM utilisateurs u
+                JOIN roles r ON u.role_id = r.id
+                WHERE u.role_id = ? $searchClause";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+        
+        return $result['total'];
+    }
 }

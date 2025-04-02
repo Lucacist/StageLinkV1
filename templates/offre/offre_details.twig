@@ -17,8 +17,10 @@
 
     <div class="offre-content">
         <div class="offre-header">
+        <div>
             <h2>{{ offre.titre }}</h2>
             <h3>{{ offre.entreprise_nom }}</h3>
+            </div>
             
             {% if session.user_role is defined and (session.user_role == 'ADMIN' or session.user_role == 'PILOTE') %}
             <div class="admin-actions">

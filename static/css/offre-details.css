@@ -28,7 +28,8 @@
   
   .offre-header {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
   }
   
   .offre-header h3 {
@@ -163,15 +164,15 @@
     margin: auto;
     padding: 0.6rem 1.5rem;
     background-color: transparent;
-    color: var(--couleur-texte);
-    border: solid 1px var(--couleur-texte);
+    color: #99afff;
+    border: solid 1px #99afff;
     text-decoration: none;
     border-radius: 99px;
     transition: background-color 0, 3s;
   }
   
   .btn-view-applications:hover {
-    background-color: var(--couleur-texte);
+    background-color: #99afff;
     color: var(--couleur-container);
   }
   .btn-view-red {
@@ -332,9 +333,9 @@
     margin-top: 20px;
   }
 
-  /* Styles pour les boutons d'administration */
   .admin-actions {
     display: flex;
     gap: 10px;
     margin-top: 15px;
+    width: fit-content;
   }

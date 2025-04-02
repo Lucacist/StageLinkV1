@@ -229,9 +229,8 @@
 
 .users-table td.actions {
   display: flex;
-  gap: 8px;
-  justify-content: flex-start;
-  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
 }
 
 .users-table td[data-label="Email"] {
@@ -553,6 +552,99 @@ h2 {
   transition: opacity 0.3s ease;
 }
 
+.search-input-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.search-container {
+  margin: 20px auto 20px auto;
+}
+.search-container form {
+  border: solid 1px var(--couleur-input-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  width: 300px;
+  gap: 5px;
+  padding: 0 16px;
+  border-radius: 100px;
+}
+.search-container input {
+  border: 0;
+  padding: 0;
+  width: 100%;
+  background-color: transparent;
+  outline: none;
+}
+.search-container form button {
+  border: 0;
+  display: flex;
+  padding: 0;
+  background-color: transparent;
+}
+
+
+.reset-search {
+  color: var(--couleur-input-border);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.reset-search:hover {
+  text-decoration: underline;
+}
+
+/* Styles pour la pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.page-link {
+  display: inline-block;
+  padding: 8px 12px;
+  margin: 0 2px;
+  border-radius: 4px;
+  background-color: var(--couleur-container);
+  color: var(--couleur-texte);
+  text-decoration: none;
+  border: 1px solid var(--couleur-bordure-container);
+  transition: all 0.2s ease;
+}
+
+.page-link:hover {
+  background-color: var(--couleur-bleu);
+  color: white;
+}
+
+.page-link.active {
+  background-color: var(--couleur-bleu);
+  color: white;
+  border-color: var(--couleur-bleu);
+}
+
+.page-ellipsis {
+  padding: 8px 12px;
+  margin: 0 2px;
+  color: var(--couleur-texte);
+}
+
+.pagination-info {
+  margin-left: 10px;
+  padding: 8px 0;
+  color: var(--couleur-texte);
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+
 /* Animations */
 @keyframes fadeIn {
   from {
@@ -684,5 +776,27 @@ h2 {
 
   .form-action-buttons .btn {
     width: 100%;
+  }
+}
+
+/* Responsive pour la pagination et la recherche */
+@media screen and (max-width: 768px) {
+  .search-form {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .search-input-container {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .pagination {
+    gap: 5px;
+  }
+  
+  .page-link {
+    padding: 6px 10px;
+    font-size: 0.9rem;
   }
 }
