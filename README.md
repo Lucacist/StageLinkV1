@@ -641,16 +641,20 @@ COMMIT;
 
 ```
 StageLinkV1/
-├── assets/           # Fichiers statiques (CSS, JS, images)
-├── config/           # Fichiers de configuration
-├── controllers/      # Contrôleurs MVC
-├── models/           # Modèles MVC
-├── templates/        # Templates Twig
-├── vendor/           # Dépendances (générées par Composer)
-├── .htaccess         # Configuration Apache
-├── composer.json     # Configuration Composer
-├── index.php         # Point d'entrée de l'application
-└── README.md         # Ce fichier
+├── src/
+    │   ├── config/           # Fichiers de configuration
+    │   ├── Controllers/      # Contrôleurs MVC
+    │   ├── Models/           # Modèles MVC
+    │   └── Utils/            # Fichiers URL
+    ├── static/               # Fichiers statiques (CSS, JS, images)
+    ├── templates/            # Templates Twig
+    ├── uploads/              # Documents uploads
+    ├── vendor/               # Dépendances (générées par Composer)
+    ├── .htaccess             # Configuration Apache
+    ├── .env                  # Sécuritée connexion bdd
+    ├── composer.json         # Configuration Composer
+    ├── index.php             # Point d'entrée de l'application
+    └── README.md             # Ce fichier
 ```
 
 ## 👥 Équipe de développement
