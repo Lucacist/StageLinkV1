@@ -1,7 +1,5 @@
-/* ====================================
-   1. LAYOUT PRINCIPAL
-   ==================================== */
-   .candidatures-container {
+
+.candidatures-container {
     max-width: 1200px;
     margin: 2rem auto;
     padding: 0 1rem;
@@ -14,9 +12,6 @@
     margin-top: 2rem;
 }
 
-/* ====================================
-   2. CARTES DE CANDIDATURE
-   ==================================== */
 .candidature-item {
     background-color: var(--couleur-container);
     border: 1px solid var(--couleur-bordure-container);
@@ -37,9 +32,6 @@
     font-size: 1.2rem;
 }
 
-/* ====================================
-   3. DÉTAILS DES CANDIDATURES
-   ==================================== */
 .candidature-details {
     display: flex;
     gap: 2rem;
@@ -62,9 +54,6 @@
     font-weight: 500;
 }
 
-/* ====================================
-   4. INDICATEURS DE STATUT
-   ==================================== */
 .status {
     font-weight: 600;
     padding: 0.25rem 0.75rem;
@@ -88,9 +77,6 @@
     color: #8b0000;
 }
 
-/* ====================================
-   5. LETTRE DE MOTIVATION
-   ==================================== */
 .lettre-motivation {
     background-color: var(--couleur-backtexte);
     padding: 1rem;
@@ -109,9 +95,6 @@
     white-space: pre-line;
 }
 
-/* ====================================
-   6. BOUTONS ET ACTIONS
-   ==================================== */
 .candidature-actions {
     display: flex;
     gap: 1rem;
@@ -119,7 +102,6 @@
     flex-wrap: wrap;
 }
 
-/* Base des boutons */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -139,7 +121,6 @@
     font-size: 1rem;
 }
 
-/* Variantes de boutons */
 .btn-primary {
     background-color: var(--primary-color);
     color: rgb(8, 8, 8);
@@ -154,12 +135,14 @@
 
 .btn-secondary {
     background-color: white;
-    color: var(--primary-color);
-    border: 1px solid var(--primary-color);
+    color: #000;
+    border: 1px solid #000;
+    border-radius: 99px;
 }
 
 .btn-secondary:hover {
-    background-color: var(--couleur-backtexte, #f8f9fa);
+    background-color: #000;
+    color: #fff;
     transform: translateY(-2px);
 }
 
@@ -169,9 +152,6 @@
     cursor: not-allowed;
 }
 
-/* ====================================
-   7. RESPONSIVE
-   ==================================== */
 @media (max-width: 768px) {
     .candidature-actions {
         flex-direction: column;
