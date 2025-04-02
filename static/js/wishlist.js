@@ -22,25 +22,55 @@ function toggleLikeSimple(button, offreId, event) {
         svg.setAttribute('stroke', 'red');
     }
 
-    // Utiliser une requête GET simple avec une image invisible pour éviter les problèmes AJAX
-    const timestamp = new Date().getTime(); // Évite le cache
-    const img = new Image();
-    img.onload = function() {
-        console.log('Like/unlike action sent to server successfully');
-    };
-    img.onerror = function() {
-        console.log('Like/unlike action sent to server');
-    };
-    img.style.display = 'none';
-    img.src = `index.php?route=toggle_like&offre_id=${offreId}&ts=${timestamp}`;
-    document.body.appendChild(img);
-    
-    // Nettoyer l'image après utilisation
-    setTimeout(() => {
-        if (img && img.parentNode) {
-            img.parentNode.removeChild(img);
+    // Utiliser fetch pour une requête AJAX plus fiable
+    fetch(`index.php?route=toggle_like&offre_id=${offreId}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
         }
-    }, 2000);
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Like/unlike action response:', data);
+        
+        // Si nous sommes sur la page wishlist et que nous avons unliké une offre, la supprimer de l'affichage
+        if (window.location.href.includes('route=wishlist') && isLiked) {
+            const offreContainer = button.closest('.offre-link');
+            if (offreContainer) {
+                // Animation de disparition
+                offreContainer.style.transition = 'opacity 0.5s ease';
+                offreContainer.style.opacity = '0';
+                
+                // Supprimer l'élément après l'animation
+                setTimeout(() => {
+                    offreContainer.remove();
+                    
+                    // Vérifier s'il reste des offres
+                    const remainingOffres = document.querySelectorAll('.offre-link');
+                    if (remainingOffres.length === 0) {
+                        // Aucune offre restante, afficher un message
+                        const container = document.querySelector('.offres-container');
+                        if (container) {
+                            container.innerHTML = '<div class="message">Vous n\'avez pas encore aimé d\'offre.</div>';
+                        }
+                    }
+                }, 500);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error toggling like:', error);
+        // En cas d'erreur, revenir à l'état précédent
+        if (isLiked) {
+            button.classList.add('liked');
+            svg.setAttribute('fill', 'red');
+            svg.setAttribute('stroke', 'red');
+        } else {
+            button.classList.remove('liked');
+            svg.setAttribute('fill', 'none');
+            svg.setAttribute('stroke', '#000000');
+        }
+    });
     
     return false; // Important pour bloquer la propagation
 }
