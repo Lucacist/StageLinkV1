@@ -47,21 +47,17 @@ StageLink est une application web conçue pour faciliter la recherche et la gest
    git clone https://github.com/votre-username/StageLinkV1.git
    ```
 
-2. Configurer le serveur Apache avec les vhosts appropriés
-   - Un vhost principal pour l'application
-   - Un vhost spécifique pour le contenu statique
-
-3. Importer la base de données
+2. Importer la base de données
    ```bash
    mysql -u username -p database_name < database/stagelink.sql
    ```
 
-4. Installer les dépendances
+3. Installer les dépendances
    ```bash
    composer install
    ```
 
-5. Configurer les paramètres de connexion à la base de données dans `config/database.php`
+4. Configurer les paramètres de connexion à la base de données dans `config/database.php`
 
 ## 📁 Structure du projet
 
@@ -102,5 +98,3 @@ L'application est entièrement responsive et s'adapte à tous les appareils, des
 © 2025 Équipe StageLinkV1. Tous droits réservés.
 
 ---
-
-💡 **Note pour les développeurs**: N'oubliez pas de consulter la documentation complète dans le dossier `docs/` pour plus de détails sur l'architecture et les conventions de codage.
