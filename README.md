@@ -81,10 +81,10 @@ StageLinkV1/
 
 ## 👥 Équipe de développement
 
-- Membre 1 - Rôle
-- Membre 2 - Rôle
-- Membre 3 - Rôle
-- Membre 4 - Rôle
+- Enzo - Chef de Projet / développeur fullstack
+- Luca - développeur fullstack
+- Alexandre - développeur fullstack
+- Léo - développeur fullstack
 
 ## 🔒 Sécurité
 
