@@ -1,19 +1,19 @@
 <?php
+
+require_once __DIR__ . '/../models/utilisateurmodel.php';
+
 class Auth {
     public static function hasPermission($userId, $permissionCode) {
-        require_once __DIR__ . '/../models/utilisateurmodel.php';
         $utilisateurmodel = new utilisateurmodel();
         return $utilisateurmodel->hasPermission($userId, $permissionCode);
     }
     
     public static function getUserPermissions($userId) {
-        require_once __DIR__ . '/../models/utilisateurmodel.php';
         $utilisateurmodel = new utilisateurmodel();
         return $utilisateurmodel->getUserPermissions($userId);
     }
     
     public static function getUserRole($userId) {
-        require_once __DIR__ . '/../models/utilisateurmodel.php';
         $utilisateurmodel = new utilisateurmodel();
         return $utilisateurmodel->getUserRole($userId);
     }
@@ -35,4 +35,4 @@ class Auth {
     }
 }
 
-
+?>
