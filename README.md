@@ -1,8 +1,8 @@
-# 🎓 StageLinkV1 - Plateforme de gestion des stages
+# 🎓 StageLink - Plateforme de gestion des stages
 
 ## 📋 Description du projet
 
-StageLinkV1 est une application web conçue pour faciliter la recherche et la gestion des stages pour les étudiants du CESI. Elle centralise les offres de stage, permet de gérer les candidatures et offre une interface adaptée à chaque type d'utilisateur (étudiant, pilote de promotion, administrateur).
+StageLink est une application web conçue pour faciliter la recherche et la gestion des stages pour les étudiants du CESI. Elle centralise les offres de stage, permet de gérer les candidatures et offre une interface adaptée à chaque type d'utilisateur (étudiant, pilote de promotion, administrateur).
 
 ## ✨ Fonctionnalités principales
 
